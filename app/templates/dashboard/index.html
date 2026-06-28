@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — {{ app_name }}{% endblock %}
+{% block page_title %}Inicio{% endblock %}
+{% block content %}
+
+<div class="grid-4 mb-3">
+  <div class="stat-card">
+    <div class="stat-label">🪙 Créditos disponibles</div>
+    <div class="stat-value text-accent">{{ current_user.credits }}</div>
+    <div><a href="{{ url_for('payments.plans') }}" class="text-sm" style="color:var(--accent2);">Comprar más →</a></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">📋 Trabajos totales</div>
+    <div class="stat-value">{{ current_user.jobs.count() }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">✅ Completados</div>
+    <div class="stat-value text-success">{{ current_user.jobs.filter_by(status='completed').count() }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">📅 Miembro desde</div>
+    <div class="stat-value" style="font-size:1.2rem;">{{ current_user.created_at | fecha }}</div>
+  </div>
+</div>
+
+{% if not current_user.email_verified %}
+<div class="alert alert-warning mb-3">
+  ⚠️ <strong>Verifica tu email.</strong> Revisa tu bandeja de entrada o
+  <a href="{{ url_for('auth.resend_verify') }}" style="color:inherit;font-weight:700;">reenvía la verificación</a>.
+</div>
+{% endif %}
+
+<div class="grid-2 mb-3">
+  <!-- Servicios rápidos -->
+  <div class="card">
+    <div class="card-title">⚡ Servicios disponibles</div>
+    <div class="grid-2" style="grid-template-columns: repeat(2,1fr); gap:12px;">
+      {% for svc in services[:6] %}
+      <div class="service-card">
+        <div class="service-icon">{{ svc.icon }}</div>
+        <div class="font-bold text-sm">{{ svc.name }}</div>
+        <div class="service-cost mb-1">Costo: <strong>{{ svc.credit_cost }} créditos</strong></div>
+        <form method="POST" action="{{ url_for('dashboard.run_service', service_id=svc.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-primary btn-sm"
+            {% if current_user.credits < svc.credit_cost %}disabled title="Sin créditos suficientes"{% endif %}>
+            Ejecutar
+          </button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="mt-2">
+      <a href="{{ url_for('dashboard.services') }}" class="btn btn-outline btn-sm">Ver todos los servicios →</a>
+    </div>
+  </div>
+
+  <!-- Trabajos recientes -->
+  <div class="card">
+    <div class="card-title">📋 Trabajos recientes</div>
+    {% if recent_jobs %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Servicio</th><th>Estado</th><th>Fecha</th></tr></thead>
+        <tbody>
+          {% for job in recent_jobs %}
+          <tr>
+            <td>{{ job.service.name if job.service else '—' }}</td>
+            <td>
+              {% if job.status == 'completed' %}<span class="badge badge-success">✅ Listo</span>
+              {% elif job.status == 'running' %}<span class="badge badge-info">⏳ Corriendo</span>
+              {% elif job.status == 'failed' %}<span class="badge badge-danger">❌ Error</span>
+              {% else %}<span class="badge badge-neutral">⏸ Cola</span>{% endif %}
+            </td>
+            <td class="text-muted text-xs">{{ job.created_at | fecha }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-muted text-sm">No tienes trabajos todavía. ¡Ejecuta un servicio!</p>
+    {% endif %}
+    <div class="mt-2">
+      <a href="{{ url_for('dashboard.jobs') }}" class="btn btn-outline btn-sm">Ver todos →</a>
+    </div>
+  </div>
+</div>
+
+<!-- Transacciones recientes -->
+<div class="card">
+  <div class="card-title">🪙 Últimas transacciones de créditos</div>
+  {% if recent_tx %}
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Descripción</th><th>Tipo</th><th>Créditos</th><th>Saldo</th><th>Fecha</th></tr></thead>
+      <tbody>
+        {% for tx in recent_tx %}
+        <tr>
+          <td>{{ tx.description }}</td>
+          <td>
+            {% if tx.type == 'credit' %}<span class="badge badge-success">+ Ingreso</span>
+            {% elif tx.type == 'debit' %}<span class="badge badge-danger">- Consumo</span>
+            {% else %}<span class="badge badge-info">↩ Reembolso</span>{% endif %}
+          </td>
+          <td class="{% if tx.type == 'credit' %}text-success{% else %}text-danger{% endif %} font-bold">
+            {{ '+' if tx.type == 'credit' else '-' }}{{ tx.amount }}
+          </td>
+          <td>{{ tx.balance_after }}</td>
+          <td class="text-muted text-xs">{{ tx.created_at | fecha }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="text-muted text-sm">Sin transacciones aún.</p>
+  {% endif %}
+</div>
+{% endblock %}

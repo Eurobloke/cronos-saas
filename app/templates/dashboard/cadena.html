@@ -1,0 +1,463 @@
+{% extends 'base.html' %}
+{% block title %}Modo Cadena — {{ app_name }}{% endblock %}
+{% block page_title %}🔗 Constructor de Cadenas{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Layout ──────────────────────────────────────────────────────────── */
+.chain-layout {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 20px;
+  align-items: start;
+}
+@media(max-width:900px){ .chain-layout{grid-template-columns:1fr;} }
+
+/* ── Bloques disponibles ─────────────────────────────────────────────── */
+.blocks-panel { background:var(--card); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+.blocks-header { padding:14px 18px; border-bottom:1px solid var(--border); font-weight:700; display:flex; align-items:center; gap:8px; }
+.blocks-body { padding:16px; max-height:calc(100vh - 200px); overflow-y:auto; }
+.cat-title { font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin:14px 0 8px; font-weight:700; }
+.cat-title:first-child { margin-top:0; }
+.blocks-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px; }
+.block-card {
+  background:var(--bg3);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:12px;
+  cursor:pointer;
+  transition:all .2s;
+  display:flex; flex-direction:column; gap:4px;
+  position:relative;
+}
+.block-card:hover { border-color:var(--accent); background:rgba(99,102,241,.15); transform:translateY(-2px); }
+.block-card .b-icon { font-size:1.5rem; }
+.block-card .b-label { font-size:0.85rem; font-weight:700; line-height:1.2; }
+.block-card .b-desc { font-size:0.72rem; color:var(--muted); line-height:1.3; }
+.block-card .b-cost { font-size:0.75rem; color:var(--accent2); font-weight:700; margin-top:4px; }
+.block-card .b-add {
+  position:absolute; top:6px; right:6px;
+  width:22px; height:22px; border-radius:50%;
+  background:var(--accent); color:#fff;
+  border:none; font-size:0.9rem; font-weight:900;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; opacity:0; transition:opacity .2s;
+}
+.block-card:hover .b-add { opacity:1; }
+
+/* ── Panel de la cadena ──────────────────────────────────────────────── */
+.chain-panel { background:var(--card); border:1px solid var(--border); border-radius:12px; overflow:hidden; position:sticky; top:80px; }
+.chain-header { padding:14px 18px; border-bottom:1px solid var(--border); font-weight:700; display:flex; align-items:center; justify-content:space-between; }
+.chain-body { padding:14px; min-height:200px; }
+.chain-empty {
+  text-align:center; padding:40px 20px;
+  color:var(--muted); font-size:0.9rem;
+}
+.chain-empty .ce-icon { font-size:3rem; margin-bottom:10px; }
+
+/* Paso en la cadena */
+.chain-step {
+  background:var(--bg3);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:10px 12px;
+  margin-bottom:8px;
+  display:flex; align-items:center; gap:10px;
+  animation:slideIn .2s ease;
+}
+@keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+.chain-step.is-running { border-color:var(--accent); background:rgba(99,102,241,.1); }
+.chain-step.is-completed { border-color:#22c55e; background:rgba(34,197,94,.07); }
+.chain-step.is-failed { border-color:#ef4444; background:rgba(239,68,68,.07); }
+.cs-num {
+  min-width:24px; height:24px; border-radius:50%;
+  background:var(--bg); border:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+  font-size:0.72rem; font-weight:800; color:var(--muted);
+  flex-shrink:0;
+}
+.cs-icon { font-size:1.2rem; flex-shrink:0; }
+.cs-info { flex:1; min-width:0; }
+.cs-label { font-size:0.85rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.cs-cost { font-size:0.72rem; color:var(--accent2); }
+.cs-params { margin-top:6px; }
+.cs-params input, .cs-params select {
+  background:var(--bg); border:1px solid var(--border); border-radius:6px;
+  color:var(--text); padding:4px 8px; font-size:0.78rem; width:100%;
+}
+.cs-actions { display:flex; gap:4px; flex-shrink:0; }
+.cs-btn {
+  width:26px; height:26px; border-radius:6px;
+  background:var(--bg); border:1px solid var(--border);
+  color:var(--muted); cursor:pointer; font-size:0.75rem;
+  display:flex; align-items:center; justify-content:center;
+  transition:all .15s;
+}
+.cs-btn:hover { border-color:var(--accent); color:var(--text); }
+.cs-btn.rm { color:#ef4444; }
+.cs-btn.rm:hover { border-color:#ef4444; background:rgba(239,68,68,.1); }
+
+/* Progreso por paso (cuando corre) */
+.step-progress { font-size:0.75rem; color:var(--accent2); margin-top:2px; }
+
+/* Footer de la cadena */
+.chain-footer {
+  padding:14px 16px;
+  border-top:1px solid var(--border);
+  background:var(--bg2);
+}
+.cost-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; font-size:0.9rem; }
+.cost-total { font-size:1.3rem; font-weight:800; color:var(--accent); }
+.btn-run {
+  width:100%; padding:12px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#fff; border:none; border-radius:10px;
+  font-weight:800; font-size:1rem; cursor:pointer;
+  transition:opacity .2s; letter-spacing:.02em;
+}
+.btn-run:hover { opacity:.88; }
+.btn-run:disabled { opacity:.4; cursor:not-allowed; }
+
+/* Panel de progreso activo */
+.run-progress-panel {
+  display:none;
+  padding:14px 16px;
+  border-top:1px solid var(--border);
+}
+.rp-title { font-weight:700; margin-bottom:12px; font-size:0.9rem; }
+.rp-bar-wrap { background:var(--bg3); border-radius:8px; height:10px; overflow:hidden; margin-bottom:8px; }
+.rp-bar { height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); border-radius:8px; transition:width .8s ease; }
+.rp-msg { font-size:0.82rem; color:var(--muted); }
+.rp-pct { font-size:0.82rem; font-weight:700; color:var(--accent); float:right; }
+
+/* Step status icons */
+.si-pending  { color:var(--muted); }
+.si-running  { color:var(--accent); animation:pulse 1s infinite; }
+.si-completed{ color:#22c55e; }
+.si-failed   { color:#ef4444; }
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chain-layout">
+
+  <!-- ── Panel izquierdo: bloques disponibles ── -->
+  <div class="blocks-panel">
+    <div class="blocks-header">
+      🧱 Bloques disponibles
+      <span style="font-size:0.78rem;color:var(--muted);font-weight:400">
+        Clic en un bloque para añadirlo a tu cadena
+      </span>
+    </div>
+    <div class="blocks-body">
+      {% for cat, blocks in blocks_by_cat.items() %}
+      <div class="cat-title">{{ cat }}</div>
+      <div class="blocks-grid">
+        {% for b in blocks %}
+        <div class="block-card" onclick="addBlock({{ b | tojson }})" title="{{ b.desc }}">
+          <button class="b-add" title="Añadir">+</button>
+          <div class="b-icon">{{ b.icon }}</div>
+          <div class="b-label">{{ b.label }}</div>
+          <div class="b-desc">{{ b.desc }}</div>
+          <div class="b-cost">{{ b.credits }} créditos</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- ── Panel derecho: constructor de cadena ── -->
+  <div class="chain-panel">
+    <div class="chain-header">
+      <span>🔗 Tu Cadena</span>
+      <div style="display:flex;gap:6px">
+        <button onclick="clearChain()" class="btn btn-outline btn-sm" title="Limpiar cadena">🗑️</button>
+        <button onclick="saveDraft()" class="btn btn-outline btn-sm" title="Guardar borrador">💾</button>
+      </div>
+    </div>
+
+    <div class="chain-body" id="chainBody">
+      <div class="chain-empty" id="chainEmpty">
+        <div class="ce-icon">🔗</div>
+        <div>Tu cadena está vacía</div>
+        <div style="font-size:0.8rem;margin-top:6px">
+          Haz clic en cualquier bloque de la izquierda para añadirlo aquí
+        </div>
+      </div>
+      <!-- Los pasos se insertan aquí dinámicamente -->
+    </div>
+
+    <!-- Panel de progreso (oculto hasta que corre) -->
+    <div class="run-progress-panel" id="runProgressPanel">
+      <div class="rp-title">⏳ Ejecutando cadena...</div>
+      <div class="rp-bar-wrap"><div class="rp-bar" id="rpBar" style="width:0%"></div></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+        <div class="rp-msg" id="rpMsg">Iniciando...</div>
+        <div class="rp-pct" id="rpPct">0%</div>
+      </div>
+      <!-- Pasos individuales con estado -->
+      <div id="rpSteps" style="display:flex;flex-direction:column;gap:4px;font-size:0.82rem;"></div>
+    </div>
+
+    <div class="chain-footer">
+      <div class="cost-row">
+        <span style="color:var(--muted)">Total de créditos:</span>
+        <span class="cost-total" id="costTotal">0</span>
+      </div>
+      <div style="font-size:0.78rem;color:var(--muted);margin-bottom:10px">
+        Tienes <strong style="color:var(--accent2)">{{ current_user.credits }}</strong> créditos disponibles
+      </div>
+      <button class="btn-run" id="runBtn" onclick="runChain()" disabled>
+        ▶ Ejecutar Cadena
+      </button>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CSRF = document.querySelector('meta[name="csrf-token"]').content;
+let chain = [];  // [{slug, label, icon, credits, params:{}}]
+let activeSSE = null;
+let isRunning = false;
+
+// ── Cargar borrador guardado ───────────────────────────────────────────
+try {
+  const saved = localStorage.getItem('cronos_chain_draft');
+  if (saved) chain = JSON.parse(saved);
+} catch(e){}
+renderChain();
+
+// ── Añadir bloque ─────────────────────────────────────────────────────
+function addBlock(block) {
+  if (isRunning) return;
+  const step = {
+    slug: block.slug,
+    label: block.label,
+    icon: block.icon,
+    credits: block.credits,
+    params: {},
+  };
+  // Params por defecto
+  (block.params || []).forEach(p => { step.params[p.name] = p.default || ''; });
+  step._params_def = block.params || [];
+  chain.push(step);
+  saveDraft();
+  renderChain();
+}
+
+// ── Render de la cadena ───────────────────────────────────────────────
+function renderChain() {
+  const body = document.getElementById('chainBody');
+  const empty = document.getElementById('chainEmpty');
+  const runBtn = document.getElementById('runBtn');
+  let total = 0;
+
+  // Limpiar pasos anteriores (dejar solo el empty y el progress panel)
+  body.querySelectorAll('.chain-step').forEach(el => el.remove());
+
+  if (chain.length === 0) {
+    empty.style.display = 'block';
+    runBtn.disabled = true;
+    document.getElementById('costTotal').textContent = '0';
+    return;
+  }
+  empty.style.display = 'none';
+
+  chain.forEach((step, i) => {
+    total += step.credits || 0;
+    const div = document.createElement('div');
+    div.className = 'chain-step';
+    div.dataset.index = i;
+
+    // Formulario de parámetros inline
+    const paramDefs = step._params_def || [];
+    const paramsHtml = paramDefs.length > 0 ? `
+      <div class="cs-params">
+        ${paramDefs.map(p => `
+          <label style="font-size:0.72rem;color:var(--muted)">${p.label}:</label>
+          ${p.type === 'date'
+            ? `<input type="date" data-param="${p.name}" value="${step.params[p.name] || ''}" onchange="updateParam(${i},'${p.name}',this.value)">`
+            : `<input type="text" data-param="${p.name}" placeholder="${p.default || ''}" value="${step.params[p.name] || ''}" onchange="updateParam(${i},'${p.name}',this.value)">`
+          }
+        `).join('')}
+      </div>` : '';
+
+    div.innerHTML = `
+      <div class="cs-num">${i+1}</div>
+      <div class="cs-icon">${step.icon}</div>
+      <div class="cs-info">
+        <div class="cs-label">${esc(step.label)}</div>
+        <div class="cs-cost">${step.credits} cr</div>
+        ${paramsHtml}
+      </div>
+      <div class="cs-actions">
+        <button class="cs-btn" onclick="moveStep(${i},-1)" title="Subir" ${i===0?'disabled':''}>↑</button>
+        <button class="cs-btn" onclick="moveStep(${i},1)" title="Bajar" ${i===chain.length-1?'disabled':''}>↓</button>
+        <button class="cs-btn rm" onclick="removeStep(${i})" title="Quitar">✕</button>
+      </div>`;
+    body.appendChild(div);
+  });
+
+  document.getElementById('costTotal').textContent = total;
+  runBtn.disabled = isRunning;
+}
+
+function updateParam(idx, name, val) {
+  chain[idx].params[name] = val;
+  saveDraft();
+}
+
+function moveStep(i, dir) {
+  if (isRunning) return;
+  const j = i + dir;
+  if (j < 0 || j >= chain.length) return;
+  [chain[i], chain[j]] = [chain[j], chain[i]];
+  saveDraft();
+  renderChain();
+}
+
+function removeStep(i) {
+  if (isRunning) return;
+  chain.splice(i, 1);
+  saveDraft();
+  renderChain();
+}
+
+function clearChain() {
+  if (isRunning) return;
+  if (chain.length > 0 && !confirm('¿Limpiar toda la cadena?')) return;
+  chain = [];
+  saveDraft();
+  renderChain();
+}
+
+function saveDraft() {
+  localStorage.setItem('cronos_chain_draft', JSON.stringify(chain));
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Ejecutar cadena ───────────────────────────────────────────────────
+async function runChain() {
+  if (chain.length === 0 || isRunning) return;
+
+  const total = chain.reduce((s,c) => s + (c.credits||0), 0);
+  const avail = {{ current_user.credits }};
+  if (total > avail) {
+    alert(`No tienes suficientes créditos. Necesitas ${total}, tienes ${avail}.`);
+    return;
+  }
+  if (!confirm(`¿Ejecutar cadena de ${chain.length} pasos? Se usarán ${total} créditos.`)) return;
+
+  isRunning = true;
+  document.getElementById('runBtn').disabled = true;
+  document.getElementById('runBtn').textContent = '⏳ Ejecutando...';
+  document.getElementById('runProgressPanel').style.display = 'block';
+
+  try {
+    const resp = await fetch('/api/chain/run', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','X-CSRFToken':CSRF},
+      body: JSON.stringify({
+        name: `Cadena ${new Date().toLocaleTimeString('es')}`,
+        steps: chain.map(s => ({slug:s.slug, label:s.label, params:s.params})),
+      }),
+    });
+    const data = await resp.json();
+
+    if (data.error) {
+      alert(data.error);
+      resetRunState();
+      return;
+    }
+    startProgressSSE(data.job_id);
+  } catch(e) {
+    alert('Error de conexión al servidor.');
+    resetRunState();
+  }
+}
+
+function startProgressSSE(jobId) {
+  if (activeSSE) activeSSE.close();
+  const sse = new EventSource(`/api/jobs/${jobId}/stream`);
+  activeSSE = sse;
+
+  const bar = document.getElementById('rpBar');
+  const msg = document.getElementById('rpMsg');
+  const pct = document.getElementById('rpPct');
+  const title = document.querySelector('#runProgressPanel .rp-title');
+  const stepsEl = document.getElementById('rpSteps');
+
+  sse.onmessage = function(e) {
+    const d = JSON.parse(e.data);
+    const p = d.progress || 0;
+    bar.style.width = p + '%';
+    msg.textContent = d.message || '';
+    pct.textContent = p + '%';
+
+    // Renderizar pasos individuales
+    if (d.step_results && d.step_results.length > 0) {
+      renderStepResults(d.step_results, stepsEl);
+    }
+
+    if (d.status === 'completed') {
+      title.textContent = '✅ ¡Cadena completada!';
+      bar.style.background = '#22c55e';
+      sse.close();
+      isRunning = false;
+      document.getElementById('runBtn').textContent = '▶ Ejecutar Cadena';
+      document.getElementById('runBtn').disabled = false;
+      // Limpiar cadena y localStorage después del éxito
+      setTimeout(() => {
+        chain = [];
+        saveDraft();
+        renderChain();
+        document.getElementById('runProgressPanel').style.display = 'none';
+      }, 4000);
+    } else if (d.status === 'failed') {
+      title.textContent = '❌ Error en la cadena';
+      bar.style.background = '#ef4444';
+      msg.textContent = d.error || 'Hubo un error';
+      sse.close();
+      resetRunState();
+    }
+  };
+  sse.onerror = () => { sse.close(); resetRunState(); };
+}
+
+function renderStepResults(results, container) {
+  container.innerHTML = '';
+  results.forEach((r, i) => {
+    const icons = {pending:'⬜',running:'⏳',completed:'✅',failed:'❌',skipped:'⏭️'};
+    const colors = {pending:'var(--muted)',running:'var(--accent)',completed:'#22c55e',failed:'#ef4444',skipped:'var(--muted)'};
+    const dur = r.duration ? ` (${fmtSec(r.duration)})` : '';
+    const div = document.createElement('div');
+    div.style.cssText = `display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border)`;
+    div.innerHTML = `
+      <span style="font-size:1rem">${icons[r.status]||'⬜'}</span>
+      <span style="color:${colors[r.status]||'var(--muted)'}">
+        ${i+1}. ${esc(r.label || r.slug)}${dur}
+      </span>`;
+    container.appendChild(div);
+  });
+}
+
+function fmtSec(s) {
+  if (s < 60) return `${s}s`;
+  return `${Math.floor(s/60)}m ${s%60}s`;
+}
+
+function resetRunState() {
+  isRunning = false;
+  document.getElementById('runBtn').disabled = false;
+  document.getElementById('runBtn').textContent = '▶ Ejecutar Cadena';
+}
+</script>
+{% endblock %}

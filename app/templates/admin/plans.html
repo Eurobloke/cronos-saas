@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}Planes — Admin{% endblock %}
+{% block page_title %}💎 Gestión de planes{% endblock %}
+{% block content %}
+<div class="flex justify-between items-center mb-3">
+  <span class="text-muted text-sm">{{ plans | length }} planes</span>
+  <a href="{{ url_for('admin.plan_edit') }}" class="btn btn-primary btn-sm">+ Nuevo plan</a>
+</div>
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Nombre</th><th>Slug</th><th>Precio/mes</th><th>Precio/año</th><th>Créditos/mes</th><th>Suscripciones</th><th>Activo</th><th>Acciones</th></tr></thead>
+      <tbody>
+        {% for plan in plans %}
+        <tr>
+          <td class="font-bold">{{ plan.name }} {% if plan.is_popular %}<span class="badge badge-warning">Popular</span>{% endif %}</td>
+          <td class="text-muted text-xs">{{ plan.slug }}</td>
+          <td>{{ plan.price_monthly | moneda }}</td>
+          <td>{{ plan.price_annual | moneda }}</td>
+          <td class="text-accent font-bold">{{ plan.credits_monthly }}</td>
+          <td>{{ plan.subscriptions.count() }}</td>
+          <td><span class="badge {% if plan.is_active %}badge-success{% else %}badge-neutral{% endif %}">{{ '✅' if plan.is_active else '❌' }}</span></td>
+          <td>
+            <a href="{{ url_for('admin.plan_edit', plan_id=plan.id) }}" class="btn btn-outline btn-sm">Editar</a>
+            <button onclick="togglePlan({{ plan.id }}, this)" class="btn btn-outline btn-sm">
+              {{ 'Desactivar' if plan.is_active else 'Activar' }}
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+async function togglePlan(id, btn) {
+  const data = await apiPost(`/admin/plans/${id}/toggle`);
+  if (data.active !== undefined) {
+    btn.textContent = data.active ? 'Desactivar' : 'Activar';
+    showToast(data.active ? 'Plan activado' : 'Plan desactivado');
+  }
+}
+</script>
+{% endblock %}

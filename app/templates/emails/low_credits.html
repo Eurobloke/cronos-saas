@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+body{font-family:Inter,system-ui,sans-serif;background:#0f172a;margin:0;padding:40px 20px;}
+.card{background:#1e293b;border-radius:16px;max-width:560px;margin:0 auto;padding:40px;color:#e2e8f0;}
+.btn{display:inline-block;background:#f59e0b;color:#0f172a;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:800;margin:20px 0;}
+p{color:#94a3b8;line-height:1.7;}
+</style></head>
+<body>
+<div class="card">
+  <h1 style="font-weight:900;color:#f59e0b;margin-bottom:8px;">⚠️ Te quedan pocos créditos</h1>
+  <p>Hola {{ user.username }}, tu saldo de créditos en <strong style="color:#e2e8f0;">{{ app_name }}</strong> es bajo.</p>
+  <p>Tienes <strong style="color:#f59e0b;">{{ user.credits }} créditos</strong> disponibles. Recarga para continuar generando contenido sin interrupciones.</p>
+  <a href="{{ app_url }}/payments/plans" class="btn">🪙 Comprar créditos ahora</a>
+</div>
+</body></html>

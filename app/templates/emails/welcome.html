@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+body{font-family:Inter,system-ui,sans-serif;background:#0f172a;margin:0;padding:40px 20px;}
+.card{background:#1e293b;border-radius:16px;max-width:560px;margin:0 auto;padding:40px;color:#e2e8f0;}
+h1{font-size:1.8rem;font-weight:900;background:linear-gradient(135deg,#6366f1,#38bdf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;}
+.btn{display:inline-block;background:#6366f1;color:white;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:700;margin:20px 0;}
+p{color:#94a3b8;line-height:1.7;}
+.credits{background:#1e3a5f;border-radius:8px;padding:16px;margin:20px 0;text-align:center;}
+.credits strong{font-size:1.5rem;color:#38bdf8;}
+</style></head>
+<body>
+<div class="card">
+  <h1>⚡ {{ app_name }}</h1>
+  <h2 style="font-weight:700;margin-bottom:16px;">¡Bienvenido, {{ user.username }}! 🎉</h2>
+  <p>Tu cuenta ha sido creada exitosamente. Estás listo para generar contenido profesional para YouTube con inteligencia artificial.</p>
+  <div class="credits">
+    <div>Créditos de bienvenida</div>
+    <strong>🪙 10 créditos gratis</strong>
+    <div style="color:#94a3b8;font-size:0.85rem;margin-top:4px;">Para que pruebes todos los servicios</div>
+  </div>
+  <a href="{{ app_url }}/auth/login" class="btn">🚀 Ir a mi panel</a>
+  <p style="font-size:0.8rem;">Si tienes preguntas, responde a este email y te ayudamos.</p>
+</div>
+</body></html>

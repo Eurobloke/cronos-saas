@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}Notificaciones — {{ app_name }}{% endblock %}
+{% block page_title %}Notificaciones{% endblock %}
+{% block content %}
+<div class="card">
+  {% if notifications %}
+  <div style="display:flex;flex-direction:column;gap:12px;">
+    {% for n in notifications %}
+    <div class="alert alert-{{ n.type }}" style="flex-direction:column;align-items:flex-start;">
+      <div class="flex justify-between w-full">
+        <strong>{{ n.title }}</strong>
+        <span class="text-xs text-muted">{{ n.created_at | fecha }}</span>
+      </div>
+      <p class="text-sm mt-1">{{ n.message }}</p>
+      {% if n.link %}<a href="{{ n.link }}" class="btn btn-sm btn-outline mt-1" style="color:inherit;">Ver →</a>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="text-muted" style="text-align:center;padding:40px;">No tienes notificaciones.</p>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Jobs/Logs — Admin{% endblock %}
+{% block page_title %}📋 Logs del sistema{% endblock %}
+{% block content %}
+<div class="flex gap-2 mb-3">
+  {% for s, label in [('','Todos'),('completed','Completados'),('running','Corriendo'),('failed','Errores'),('queued','En cola')] %}
+  <a href="?status={{ s }}" class="btn btn-sm {% if status == s %}btn-primary{% else %}btn-outline{% endif %}">{{ label }}</a>
+  {% endfor %}
+</div>
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Usuario</th><th>Servicio</th><th>Estado</th><th>Créditos</th><th>Duración</th><th>Fecha</th></tr></thead>
+      <tbody>
+        {% for job in jobs.items %}
+        <tr>
+          <td class="text-xs text-muted">{{ job.id }}</td>
+          <td class="text-sm">{{ job.user.email if job.user else '—' }}</td>
+          <td>{{ job.service.name if job.service else '—' }}</td>
+          <td>
+            {% if job.status == 'completed' %}<span class="badge badge-success">✅ OK</span>
+            {% elif job.status == 'running' %}<span class="badge badge-info">⏳</span>
+            {% elif job.status == 'failed' %}<span class="badge badge-danger">❌ Error</span>
+            {% else %}<span class="badge badge-neutral">{{ job.status }}</span>{% endif %}
+          </td>
+          <td class="text-danger text-sm">-{{ job.credits_used }}</td>
+          <td class="text-xs text-muted">{% if job.duration_seconds() %}{{ "%.0f"|format(job.duration_seconds()) }}s{% else %}—{% endif %}</td>
+          <td class="text-xs text-muted">{{ job.created_at | fecha }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="text-muted" style="text-align:center;padding:32px;">Sin jobs.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if jobs.pages > 1 %}
+  <div class="flex gap-2 mt-2">
+    {% for p in jobs.iter_pages() %}
+      {% if p %}<a href="?page={{ p }}&status={{ status }}" class="btn btn-sm {% if p == jobs.page %}btn-primary{% else %}btn-outline{% endif %}">{{ p }}</a>
+      {% else %}<span class="text-muted">…</span>{% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}Configuración — {{ app_name }}{% endblock %}
+{% block page_title %}Configuración de cuenta{% endblock %}
+{% block content %}
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title">👤 Información de cuenta</div>
+    <div class="form-group">
+      <label class="form-label">Nombre</label>
+      <input class="form-control" value="{{ current_user.username }}" disabled>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input class="form-control" value="{{ current_user.email }}" disabled>
+      {% if current_user.email_verified %}
+      <div class="form-hint text-success">✅ Email verificado</div>
+      {% else %}
+      <div class="form-hint text-warning">⚠️ Email no verificado.
+        <a href="{{ url_for('auth.resend_verify') }}" style="color:var(--accent2);">Reenviar →</a>
+      </div>
+      {% endif %}
+    </div>
+    <div class="form-group">
+      <label class="form-label">Rol</label>
+      <input class="form-control" value="{{ 'Administrador' if current_user.is_admin() else 'Usuario' }}" disabled>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Miembro desde</label>
+      <input class="form-control" value="{{ current_user.created_at | fecha }}" disabled>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔐 Cambiar contraseña</div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}<div class="alert alert-{{ cat }}">{{ msg }}</div>{% endfor %}
+    {% endwith %}
+    <form method="POST" novalidate>
+      {{ form.hidden_tag() }}
+      <div class="form-group">
+        {{ form.current_password.label(class='form-label') }}
+        {{ form.current_password(class='form-control', placeholder='••••••••') }}
+        {% for e in form.current_password.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
+      </div>
+      <div class="form-group">
+        {{ form.new_password.label(class='form-label') }}
+        {{ form.new_password(class='form-control', placeholder='Nueva contraseña') }}
+        {% for e in form.new_password.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
+      </div>
+      <div class="form-group">
+        {{ form.confirm.label(class='form-label') }}
+        {{ form.confirm(class='form-control', placeholder='Confirmar nueva contraseña') }}
+        {% for e in form.confirm.errors %}<div class="form-error">{{ e }}</div>{% endfor %}
+      </div>
+      {{ form.submit(class='btn btn-primary') }}
+    </form>
+  </div>
+</div>
+{% endblock %}

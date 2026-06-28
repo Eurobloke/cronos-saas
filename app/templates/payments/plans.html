@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block title %}Planes y créditos — {{ app_name }}{% endblock %}
+{% block page_title %}Planes y créditos{% endblock %}
+{% block content %}
+
+<!-- Saldo actual -->
+<div class="alert alert-info mb-3">
+  🪙 Tienes <strong>{{ current_user.credits }} créditos</strong> disponibles.
+</div>
+
+<!-- Packs de créditos -->
+<h2 class="mb-2" style="font-size:1.2rem;font-weight:800;">Packs de créditos (pago único)</h2>
+<div class="grid-3 mb-3">
+  {% for pack in packs %}
+  <div class="plan-card {% if pack.popular %}popular{% endif %}">
+    {% if pack.popular %}<span class="plan-popular-badge">⭐ Más popular</span>{% endif %}
+    <div class="font-bold mb-1" style="font-size:1.1rem;">{{ pack.label }}</div>
+    <div class="plan-price mb-1">${{ pack.price }}<span> USD</span></div>
+    <div class="text-accent font-bold mb-3">🪙 {{ pack.credits }} créditos</div>
+    <form method="POST" action="{{ url_for('payments.buy_credits', pack_id=pack.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="form-group mb-2">
+        <input id="coupon-input" name="coupon" class="form-control" placeholder="Cupón (opcional)">
+        <div id="coupon-status" class="form-hint mt-1"></div>
+      </div>
+      <button type="submit" class="btn btn-primary w-full" style="justify-content:center;">
+        💳 Comprar con PayPal
+      </button>
+    </form>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="divider"></div>
+
+<!-- Planes de suscripción -->
+<h2 class="mb-2" style="font-size:1.2rem;font-weight:800;">Suscripciones mensuales / anuales</h2>
+<div class="grid-3 mb-3">
+  {% for plan in plans %}
+  <div class="plan-card {% if plan.is_popular %}popular{% endif %}">
+    {% if plan.is_popular %}<span class="plan-popular-badge">⭐ Más popular</span>{% endif %}
+    <div class="font-bold mb-1" style="font-size:1.1rem;">{{ plan.name }}</div>
+    <p class="text-muted text-sm mb-2">{{ plan.description }}</p>
+    <div class="plan-price">${{ "%.2f"|format(plan.price_monthly) }}<span>/mes</span></div>
+    <div class="text-muted text-xs mb-1">o ${{ "%.2f"|format(plan.price_annual) }}/año
+      {% if plan.annual_savings_percent() > 0 %}
+      <span class="badge badge-success">Ahorra {{ plan.annual_savings_percent() }}%</span>
+      {% endif %}
+    </div>
+    <div class="text-accent font-bold mb-3">🪙 {{ plan.credits_monthly }} créditos/mes</div>
+    {% for feature in plan.get_features() %}
+    <div class="plan-feature">{{ feature }}</div>
+    {% endfor %}
+    <div class="divider"></div>
+    <form method="POST" action="{{ url_for('payments.buy_plan', plan_id=plan.id, billing='monthly') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn btn-primary w-full mb-1" style="justify-content:center;">
+        💳 Mensual — ${{ "%.2f"|format(plan.price_monthly) }}
+      </button>
+    </form>
+    <form method="POST" action="{{ url_for('payments.buy_plan', plan_id=plan.id, billing='annual') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn btn-outline w-full" style="justify-content:center;">
+        💳 Anual — ${{ "%.2f"|format(plan.price_annual) }}
+      </button>
+    </form>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="alert alert-info" style="font-size:0.85rem;">
+  🔒 Todos los pagos son procesados de forma segura por <strong>PayPal</strong>.
+  No almacenamos datos de tarjetas. Puedes cancelar en cualquier momento.
+</div>
+{% endblock %}

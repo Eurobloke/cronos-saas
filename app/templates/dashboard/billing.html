@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Facturación — {{ app_name }}{% endblock %}
+{% block page_title %}Historial de pagos{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Factura</th><th>Descripción</th><th>Estado</th><th>Monto</th><th>Créditos</th><th>Fecha</th><th></th></tr></thead>
+      <tbody>
+        {% for p in payments.items %}
+        <tr>
+          <td class="text-xs font-bold">{{ p.invoice_number or '—' }}</td>
+          <td>{{ p.description or '—' }}</td>
+          <td>
+            {% if p.status == 'completed' %}<span class="badge badge-success">Pagado</span>
+            {% elif p.status == 'pending' %}<span class="badge badge-warning">Pendiente</span>
+            {% elif p.status == 'failed' %}<span class="badge badge-danger">Fallido</span>
+            {% elif p.status == 'refunded' %}<span class="badge badge-info">Reembolsado</span>
+            {% else %}<span class="badge badge-neutral">{{ p.status }}</span>{% endif %}
+          </td>
+          <td class="font-bold">{{ p.amount | moneda }}</td>
+          <td>{{ p.credits_granted }}</td>
+          <td class="text-muted text-xs">{{ p.created_at | fecha }}</td>
+          <td>
+            {% if p.status == 'completed' %}
+            <a href="{{ url_for('dashboard.download_invoice', payment_id=p.id) }}" class="btn btn-outline btn-sm">📄 PDF</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="text-muted" style="text-align:center;padding:32px;">Sin pagos todavía. <a href="{{ url_for('payments.plans') }}" style="color:var(--accent2);">Ver planes</a></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

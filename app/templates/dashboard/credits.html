@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Historial de créditos — {{ app_name }}{% endblock %}
+{% block page_title %}Historial de créditos{% endblock %}
+{% block content %}
+<div class="flex justify-between items-center mb-3">
+  <div class="stat-card" style="min-width:200px;">
+    <div class="stat-label">Saldo actual</div>
+    <div class="stat-value text-accent">{{ current_user.credits }} créditos</div>
+  </div>
+  <a href="{{ url_for('payments.plans') }}" class="btn btn-primary">💎 Comprar créditos</a>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Descripción</th><th>Tipo</th><th>Créditos</th><th>Saldo tras</th><th>Referencia</th><th>Fecha</th></tr></thead>
+      <tbody>
+        {% for tx in transactions.items %}
+        <tr>
+          <td>{{ tx.description }}</td>
+          <td>
+            {% if tx.type == 'credit' %}<span class="badge badge-success">Ingreso</span>
+            {% elif tx.type == 'debit' %}<span class="badge badge-danger">Consumo</span>
+            {% else %}<span class="badge badge-info">Reembolso</span>{% endif %}
+          </td>
+          <td class="font-bold {% if tx.type == 'credit' %}text-success{% else %}text-danger{% endif %}">
+            {{ '+' if tx.type == 'credit' else '-' }}{{ tx.amount }}
+          </td>
+          <td>{{ tx.balance_after }}</td>
+          <td class="text-muted text-xs">{{ tx.reference or '—' }}</td>
+          <td class="text-muted text-xs">{{ tx.created_at | fecha }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="text-muted" style="text-align:center;padding:32px;">Sin transacciones.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if transactions.pages > 1 %}
+  <div class="flex gap-2 mt-2">
+    {% for p in transactions.iter_pages() %}
+      {% if p %}<a href="?page={{ p }}" class="btn btn-sm {% if p == transactions.page %}btn-primary{% else %}btn-outline{% endif %}">{{ p }}</a>
+      {% else %}<span class="text-muted">…</span>{% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

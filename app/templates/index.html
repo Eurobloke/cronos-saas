@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ app_name }} — Generación de contenido con IA</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/cronos.css') }}">
+  <style>
+    .hero { min-height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 40px 20px; background: radial-gradient(ellipse at top, rgba(99,102,241,0.15) 0%, transparent 70%); }
+    .hero h1 { font-size: clamp(2.5rem, 6vw, 5rem); font-weight: 900; background: linear-gradient(135deg, #6366f1, #38bdf8, #22c55e); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 20px; }
+    .hero p { font-size: 1.2rem; color: var(--text-muted); max-width: 640px; margin: 0 auto 36px; }
+    .hero-btns { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+    .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; max-width: 1100px; margin: 60px auto; padding: 0 20px; }
+    .feature-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 28px; }
+    .feature-icon { font-size: 2rem; margin-bottom: 12px; }
+    .feature-title { font-weight: 700; margin-bottom: 8px; }
+    .feature-desc { color: var(--text-muted); font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+<nav style="padding: 16px 40px; display:flex; justify-content: space-between; align-items:center; border-bottom: 1px solid var(--border); background: var(--bg2);">
+  <h2 style="font-weight:900; background: linear-gradient(135deg,#6366f1,#38bdf8); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">⚡ {{ app_name }}</h2>
+  <div style="display:flex; gap:12px;">
+    <a href="{{ url_for('auth.login') }}" class="btn btn-outline">Iniciar sesión</a>
+    <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Empezar gratis</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div>
+    <h1>Genera contenido para YouTube con IA</h1>
+    <p>Guiones, narración, imágenes, subtítulos, videos completos y publicación automática — todo desde un solo panel.</p>
+    <div class="hero-btns">
+      <a href="{{ url_for('auth.register') }}" class="btn btn-primary" style="font-size:1rem; padding: 14px 32px;">🚀 Comenzar gratis</a>
+      <a href="{{ url_for('payments.plans') }}" class="btn btn-outline" style="font-size:1rem; padding: 14px 32px;">Ver planes</a>
+    </div>
+  </div>
+</div>
+
+<div class="features">
+  <div class="feature-card">
+    <div class="feature-icon">📝</div>
+    <div class="feature-title">Guiones con IA</div>
+    <div class="feature-desc">Genera guiones de 20+ minutos con personalidad editorial única e investigación en tiempo real.</div>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon">🎙️</div>
+    <div class="feature-title">Narración humanizada</div>
+    <div class="feature-desc">Voz con Edge-TTS procesada con ffmpeg para sonar natural. +40 voces disponibles.</div>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon">🎬</div>
+    <div class="feature-title">Videos automáticos</div>
+    <div class="feature-desc">Pipeline completo: texto → imagen → audio → subtítulos → video listo para subir.</div>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon">▶️</div>
+    <div class="feature-title">Publicación automática</div>
+    <div class="feature-desc">Sube directamente a YouTube y Facebook sin abrir el navegador manualmente.</div>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon">🪙</div>
+    <div class="feature-title">Sistema de créditos</div>
+    <div class="feature-desc">Paga solo lo que usas. Compra packs o suscríbete para créditos mensuales.</div>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon">💳</div>
+    <div class="feature-title">Pagos con PayPal</div>
+    <div class="feature-desc">Compra de forma segura. Comprobantes PDF descargables y historial completo.</div>
+  </div>
+</div>
+</body>
+</html>

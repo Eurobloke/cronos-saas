@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Pagos — Admin{% endblock %}
+{% block page_title %}💳 Historial de pagos{% endblock %}
+{% block content %}
+<div class="flex gap-2 mb-3">
+  {% for s, label in [('','Todos'),('completed','Completados'),('pending','Pendientes'),('failed','Fallidos'),('refunded','Reembolsados')] %}
+  <a href="?status={{ s }}" class="btn btn-sm {% if status == s %}btn-primary{% else %}btn-outline{% endif %}">{{ label }}</a>
+  {% endfor %}
+</div>
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Factura</th><th>Usuario</th><th>Descripción</th><th>Monto</th><th>Créditos</th><th>PayPal ID</th><th>Estado</th><th>Fecha</th></tr></thead>
+      <tbody>
+        {% for p in payments.items %}
+        <tr>
+          <td class="text-xs font-bold">{{ p.invoice_number or '—' }}</td>
+          <td class="text-sm">{{ p.user.email if p.user else '—' }}</td>
+          <td>{{ p.description or '—' }}</td>
+          <td class="font-bold {% if p.status == 'completed' %}text-success{% endif %}">{{ p.amount | moneda }}</td>
+          <td class="text-accent">{{ p.credits_granted }}</td>
+          <td class="text-xs text-muted">{{ p.paypal_capture_id or '—' }}</td>
+          <td>
+            {% if p.status == 'completed' %}<span class="badge badge-success">Completado</span>
+            {% elif p.status == 'pending' %}<span class="badge badge-warning">Pendiente</span>
+            {% elif p.status == 'failed' %}<span class="badge badge-danger">Fallido</span>
+            {% elif p.status == 'refunded' %}<span class="badge badge-info">Reembolsado</span>
+            {% else %}<span class="badge badge-neutral">{{ p.status }}</span>{% endif %}
+          </td>
+          <td class="text-xs text-muted">{{ p.created_at | fecha }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="text-muted" style="text-align:center;padding:32px;">Sin pagos.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if payments.pages > 1 %}
+  <div class="flex gap-2 mt-2">
+    {% for p in payments.iter_pages() %}
+      {% if p %}<a href="?page={{ p }}&status={{ status }}" class="btn btn-sm {% if p == payments.page %}btn-primary{% else %}btn-outline{% endif %}">{{ p }}</a>
+      {% else %}<span class="text-muted">…</span>{% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

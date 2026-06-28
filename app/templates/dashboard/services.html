@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}Servicios — {{ app_name }}{% endblock %}
+{% block page_title %}Servicios disponibles{% endblock %}
+{% block content %}
+
+<div class="flex justify-between items-center mb-3">
+  <div>
+    <p class="text-muted text-sm">Tus créditos disponibles: <strong style="color:var(--accent2);">{{ current_user.credits }}</strong></p>
+  </div>
+  <a href="{{ url_for('payments.plans') }}" class="btn btn-primary btn-sm">💎 Comprar créditos</a>
+</div>
+
+{% set categories = services | groupby('category') %}
+{% for cat, svcs in categories %}
+<div class="mb-3">
+  <h3 class="mb-2" style="text-transform:capitalize; color:var(--text-muted); font-size:0.8rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em;">{{ cat }}</h3>
+  <div class="grid-3">
+    {% for svc in svcs %}
+    <div class="service-card">
+      <div class="service-icon">{{ svc.icon }}</div>
+      <div class="font-bold mb-1">{{ svc.name }}</div>
+      <p class="text-sm text-muted mb-2">{{ svc.description or 'Servicio automatizado de generación de contenido.' }}</p>
+      <div class="service-cost mb-2">Costo: <strong>{{ svc.credit_cost }} crédito{{ 's' if svc.credit_cost != 1 }}</strong></div>
+      <form method="POST" action="{{ url_for('dashboard.run_service', service_id=svc.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {% if current_user.credits >= svc.credit_cost %}
+          <button type="submit" class="btn btn-primary btn-sm">⚡ Ejecutar</button>
+        {% else %}
+          <a href="{{ url_for('payments.plans') }}" class="btn btn-outline btn-sm">🪙 Necesitas {{ svc.credit_cost - current_user.credits }} más</a>
+        {% endif %}
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endfor %}
+
+{% if not services %}
+<div class="card">
+  <p class="text-muted">No hay servicios disponibles por el momento.</p>
+</div>
+{% endif %}
+{% endblock %}

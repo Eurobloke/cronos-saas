@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block title %}Usuario #{{ user.id }} — Admin{% endblock %}
+{% block page_title %}Usuario: {{ user.username }}{% endblock %}
+{% block content %}
+<div class="grid-2 mb-3">
+  <div class="card">
+    <div class="card-title">Información</div>
+    <div class="flex justify-between mb-1"><span class="text-muted">Email</span><span>{{ user.email }}</span></div>
+    <div class="flex justify-between mb-1"><span class="text-muted">Rol</span>
+      <span class="badge {% if user.role == 'admin' %}badge-warning{% else %}badge-neutral{% endif %}">{{ user.role }}</span>
+    </div>
+    <div class="flex justify-between mb-1"><span class="text-muted">Créditos</span>
+      <span class="font-bold text-accent" id="credits-display">{{ user.credits }}</span>
+    </div>
+    <div class="flex justify-between mb-1"><span class="text-muted">Email verificado</span><span>{{ '✅' if user.email_verified else '❌' }}</span></div>
+    <div class="flex justify-between mb-1"><span class="text-muted">Activo</span><span>{{ '✅' if user.is_active else '❌' }}</span></div>
+    <div class="flex justify-between mb-1"><span class="text-muted">Registro</span><span class="text-xs">{{ user.created_at | fecha }}</span></div>
+    <div class="flex justify-between"><span class="text-muted">Último login</span><span class="text-xs">{{ user.last_login | fecha }}</span></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Acciones</div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <!-- Agregar créditos -->
+      <div>
+        <p class="text-sm text-muted mb-1">Agregar créditos manualmente</p>
+        <form id="add-credits-form" data-user-id="{{ user.id }}" class="flex gap-2">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input id="credit-amount" type="number" min="1" class="form-control" placeholder="Cantidad" style="width:120px;">
+          <input id="credit-note" type="text" class="form-control" placeholder="Motivo" style="flex:1;">
+          <button type="submit" class="btn btn-success btn-sm">+ Agregar</button>
+        </form>
+      </div>
+      <!-- Toggle activo -->
+      <button onclick="toggleUser({{ user.id }})" class="btn {% if user.is_active %}btn-danger{% else %}btn-success{% endif %} btn-sm" id="toggle-btn">
+        {{ '🚫 Desactivar cuenta' if user.is_active else '✅ Activar cuenta' }}
+      </button>
+      <!-- Toggle admin -->
+      {% if user.id != current_user.id %}
+      <button onclick="toggleAdmin({{ user.id }})" class="btn btn-outline btn-sm" id="admin-btn">
+        {{ '⬇️ Quitar admin' if user.role == 'admin' else '⬆️ Hacer admin' }}
+      </button>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Pagos recientes -->
+<div class="card mb-3">
+  <div class="card-title">💳 Pagos recientes</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Factura</th><th>Descripción</th><th>Monto</th><th>Estado</th><th>Fecha</th></tr></thead>
+      <tbody>
+        {% for p in payments %}
+        <tr>
+          <td class="text-xs">{{ p.invoice_number or '—' }}</td>
+          <td>{{ p.description }}</td>
+          <td class="text-success font-bold">{{ p.amount | moneda }}</td>
+          <td><span class="badge badge-{% if p.status == 'completed' %}success{% else %}neutral{% endif %}">{{ p.status }}</span></td>
+          <td class="text-xs text-muted">{{ p.created_at | fecha }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="text-muted text-sm" style="text-align:center;padding:20px;">Sin pagos.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="mt-2"><a href="{{ url_for('admin.users') }}" class="btn btn-outline btn-sm">← Volver</a></div>
+{% endblock %}
+{% block extra_js %}
+<script>
+async function toggleUser(id) {
+  const data = await apiPost(`/admin/users/${id}/toggle-active`);
+  if (data.active !== undefined) {
+    const btn = document.getElementById('toggle-btn');
+    btn.textContent = data.active ? '🚫 Desactivar cuenta' : '✅ Activar cuenta';
+    btn.className = data.active ? 'btn btn-danger btn-sm' : 'btn btn-success btn-sm';
+    showToast(data.active ? 'Cuenta activada' : 'Cuenta desactivada');
+  }
+}
+async function toggleAdmin(id) {
+  const data = await apiPost(`/admin/users/${id}/make-admin`);
+  if (data.role) {
+    document.getElementById('admin-btn').textContent = data.role === 'admin' ? '⬇️ Quitar admin' : '⬆️ Hacer admin';
+    showToast('Rol actualizado: ' + data.role);
+  }
+}
+</script>
+{% endblock %}

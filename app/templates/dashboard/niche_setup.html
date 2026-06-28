@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+{% block title %}Mi Canal — {{ app_name }}{% endblock %}
+{% block page_title %}📺 Configurar Mi Canal{% endblock %}
+
+{% block content %}
+<div class="grid-2" style="gap:20px;align-items:start">
+
+  <!-- Formulario principal -->
+  <div class="card">
+    <div class="card-title">Información de tu Canal</div>
+    <p style="font-size:0.87rem;color:var(--muted);margin-bottom:20px;">
+      El asistente usa esta información para entender tu nicho y generar
+      contenido personalizado para tu audiencia.
+    </p>
+
+    <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="form-group">
+        <label class="form-label">Nombre de tu canal *</label>
+        <input type="text" name="channel_name" class="form-control"
+               value="{{ profile.channel_name or '' }}"
+               placeholder="Ej: Horóscopo Diario con Maestra Lumira" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">URL del canal (opcional)</label>
+        <input type="url" name="channel_url" class="form-control"
+               value="{{ profile.channel_url or '' }}"
+               placeholder="https://youtube.com/@tucanal">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Nicho / Tema principal *</label>
+        <select id="nicheSelect" class="form-control" onchange="syncNiche(this)">
+          <option value="">-- Selecciona una categoría --</option>
+          <option value="Horóscopo y Astrología">♈ Horóscopo y Astrología</option>
+          <option value="Motivación y Desarrollo Personal">💪 Motivación y Desarrollo Personal</option>
+          <option value="Noticias y Actualidad">📰 Noticias y Actualidad</option>
+          <option value="Fe Cristiana">✝️ Fe Cristiana</option>
+          <option value="Entretenimiento y Humor">😂 Entretenimiento y Humor</option>
+          <option value="Salud y Bienestar">🏥 Salud y Bienestar</option>
+          <option value="Tecnología">💻 Tecnología</option>
+          <option value="_custom">✏️ Otro (escribir abajo)</option>
+        </select>
+        <input type="text" name="niche" class="form-control mt-1" id="nicheCustom"
+               value="{{ profile.niche or '' }}"
+               placeholder="Escribe el nicho de tu canal..."
+               required>
+      </div>
+
+      <div class="grid-2" style="gap:16px">
+        <div class="form-group">
+          <label class="form-label">Idioma del canal</label>
+          <select name="language" class="form-control">
+            <option value="es" {% if profile.language == 'es' %}selected{% endif %}>Español</option>
+            <option value="en" {% if profile.language == 'en' %}selected{% endif %}>English</option>
+            <option value="pt" {% if profile.language == 'pt' %}selected{% endif %}>Português</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">País/Región objetivo</label>
+          <input type="text" name="country" class="form-control"
+                 value="{{ profile.country or '' }}"
+                 placeholder="Ej: República Dominicana">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Audiencia objetivo</label>
+        <input type="text" name="audience" class="form-control"
+               value="{{ profile.audience or '' }}"
+               placeholder="Ej: Mujeres hispanohablantes de 25 a 50 años interesadas en astrología">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Estilo y tono del canal</label>
+        <input type="text" name="style" class="form-control"
+               value="{{ profile.style or '' }}"
+               placeholder="Ej: Cálido, espiritual y directo. Con humor sutil y reflexiones personales.">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Descripción adicional (para el asistente)</label>
+        <textarea name="description" class="form-control" rows="3"
+                  placeholder="Cuéntale al asistente más sobre tu canal, qué temas tocas, qué evitas, tu personalidad como creador...">{{ profile.description or '' }}</textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width:100%">
+        Guardar Configuración del Canal
+      </button>
+    </form>
+  </div>
+
+  <!-- Panel lateral -->
+  <div>
+
+    <!-- YouTube OAuth -->
+    <div class="card mb-3">
+      <div class="card-title">▶️ Conectar Canal de YouTube</div>
+      {% if profile.has_youtube() %}
+      <div class="alert alert-success" style="margin-bottom:12px">
+        ✅ Canal conectado: <strong>{{ profile.youtube_channel_name or 'Tu canal' }}</strong>
+      </div>
+      <p style="font-size:0.85rem;color:var(--muted)">
+        El asistente puede subir videos directamente a tu canal.
+      </p>
+      <form method="POST" action="{{ url_for('dashboard.youtube_disconnect') }}"
+            onsubmit="return confirm('¿Desconectar YouTube?')" style="display:inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-outline btn-sm">Desconectar</button>
+      </form>
+      {% else %}
+      <p style="font-size:0.85rem;color:var(--muted);margin-bottom:14px">
+        Conecta tu canal de YouTube para que el asistente suba los videos
+        automáticamente cuando termine de generarlos.
+      </p>
+      <div class="alert alert-warning" style="font-size:0.82rem">
+        <strong>Configuración requerida:</strong> Necesitas configurar
+        YOUTUBE_CLIENT_ID y YOUTUBE_CLIENT_SECRET en tu archivo .env
+        (obtenlos en Google Cloud Console).
+      </div>
+      <a href="{{ url_for('dashboard.youtube_connect') }}" class="btn btn-primary"
+         style="width:100%;text-align:center;display:block;margin-top:10px">
+        ▶️ Conectar mi Canal de YouTube
+      </a>
+      {% endif %}
+    </div>
+
+    <!-- Vista previa del perfil -->
+    {% if profile.channel_name %}
+    <div class="card mb-3">
+      <div class="card-title">👀 Cómo te ve el asistente</div>
+      <div style="font-size:0.82rem;background:var(--bg2);border-radius:8px;padding:12px;
+                  color:var(--muted);font-family:monospace;line-height:1.7">
+        {{ profile.to_context_string() }}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Bots disponibles -->
+    <div class="card">
+      <div class="card-title">🤖 Bots Disponibles</div>
+      <div style="font-size:0.85rem">
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+          <span style="font-size:1.3rem">♈</span>
+          <div>
+            <div style="font-weight:600">Horóscopo</div>
+            <div style="color:var(--muted);font-size:0.78rem">12 signos · 20 créditos</div>
+          </div>
+          <span class="badge badge-success" style="margin-left:auto">Activo</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+          <span style="font-size:1.3rem">💪</span>
+          <div>
+            <div style="font-weight:600">Motivación</div>
+            <div style="color:var(--muted);font-size:0.78rem">Videos inspiracionales · 15 créditos</div>
+          </div>
+          <span class="badge badge-success" style="margin-left:auto">Activo</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+          <span style="font-size:1.3rem">📰</span>
+          <div>
+            <div style="font-weight:600">Noticias RD</div>
+            <div style="color:var(--muted);font-size:0.78rem">Noticias dominicanas · 10 créditos</div>
+          </div>
+          <span class="badge badge-success" style="margin-left:auto">Activo</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 0">
+          <span style="font-size:1.3rem">✝️</span>
+          <div>
+            <div style="font-weight:600">Cristiano</div>
+            <div style="color:var(--muted);font-size:0.78rem">Videos de fe · próximamente</div>
+          </div>
+          <span class="badge badge-neutral" style="margin-left:auto">Pronto</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const PRESETS = ['Horóscopo y Astrología','Motivación y Desarrollo Personal',
+  'Noticias y Actualidad','Fe Cristiana','Entretenimiento y Humor',
+  'Salud y Bienestar','Tecnología'];
+
+function syncNiche(sel) {
+  const input = document.getElementById('nicheCustom');
+  if (sel.value === '_custom' || sel.value === '') {
+    input.value = '';
+    input.focus();
+  } else {
+    input.value = sel.value;
+  }
+}
+
+// Al cargar, setea el selector según el valor guardado
+window.addEventListener('DOMContentLoaded', function() {
+  const input = document.getElementById('nicheCustom');
+  const sel = document.getElementById('nicheSelect');
+  const current = input.value;
+  if (current && PRESETS.includes(current)) {
+    sel.value = current;
+  } else if (current) {
+    sel.value = '_custom';
+  }
+});
+</script>
+{% endblock %}

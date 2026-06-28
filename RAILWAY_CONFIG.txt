@@ -1,0 +1,71 @@
+═══════════════════════════════════════════════════════════════
+  CRONOS AI — INSTRUCCIONES PARA PUBLICAR EN RAILWAY.APP
+═══════════════════════════════════════════════════════════════
+
+PASO 1 — Crear cuenta en Railway
+─────────────────────────────────
+  Ve a: https://railway.app
+  Regístrate con tu cuenta de GitHub (gratis, $5 crédito inicial)
+
+PASO 2 — Subir el código a GitHub
+───────────────────────────────────
+  1. Ve a https://github.com/new
+  2. Crea un repositorio llamado: cronos-saas
+  3. En tu computadora, abre PowerShell en la carpeta cronos_saas:
+
+     cd C:\Users\franc\music\cronos_saas
+     git init
+     git add .
+     git commit -m "Cronos SaaS v1.0"
+     git remote add origin https://github.com/TU_USUARIO/cronos-saas.git
+     git push -u origin main
+
+PASO 3 — Crear el proyecto en Railway
+───────────────────────────────────────
+  1. En Railway: New Project → Deploy from GitHub repo
+  2. Selecciona el repositorio "cronos-saas"
+  3. Railway detecta automáticamente que es Python
+
+PASO 4 — Agregar las variables de entorno
+──────────────────────────────────────────
+  En Railway → tu proyecto → Variables, agrega EXACTAMENTE estas:
+
+  SECRET_KEY           = [genera una clave random de 32 caracteres]
+  DATABASE_URL         = sqlite:///cronos.db
+  APP_NAME             = Cronos AI
+  APP_URL              = https://[tu-app].railway.app
+  ADMIN_EMAIL          = robertomartem@gmail.com
+  ADMIN_PASSWORD       = [tu contraseña segura]
+
+  ANTHROPIC_API_KEY    = [tu clave sk-ant-...]
+
+  MAIL_SERVER          = smtp.gmail.com
+  MAIL_PORT            = 587
+  MAIL_USERNAME        = [tu gmail]
+  MAIL_PASSWORD        = [contraseña de aplicación de Gmail]
+  MAIL_DEFAULT_SENDER  = Cronos AI <tu@gmail.com>
+
+  PAYPAL_CLIENT_ID     = [tu PayPal sandbox o live]
+  PAYPAL_CLIENT_SECRET = [tu PayPal secret]
+  PAYPAL_MODE          = sandbox
+
+  FLASK_ENV            = production
+
+PASO 5 — Hacer el deploy
+─────────────────────────
+  Railway despliega automáticamente al detectar el código.
+  El primer deploy tarda ~3 minutos.
+
+  Tu URL será algo como: https://cronos-saas-production.railway.app
+
+PASO 6 — Verificar que funciona
+─────────────────────────────────
+  1. Abre tu URL de Railway
+  2. Regístrate con una cuenta de prueba
+  3. Prueba el Asistente IA
+  4. Verifica los pagos en PayPal sandbox
+
+═══════════════════════════════════════════════════════════════
+  NOTA: Para base de datos persistente en Railway, usa
+  PostgreSQL (Railway lo ofrece gratis). Avisa y lo configuro.
+═══════════════════════════════════════════════════════════════

@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard — {{ app_name }}{% endblock %}
+{% block page_title %}🛡️ Panel de administración{% endblock %}
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+{% block content %}
+
+<!-- Estadísticas clave -->
+<div class="grid-4 mb-3">
+  <div class="stat-card">
+    <div class="stat-label">👥 Total usuarios</div>
+    <div class="stat-value">{{ stats.total_users }}</div>
+    <div class="stat-change">+{{ stats.new_users_month }} este mes</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">💰 Ingresos totales</div>
+    <div class="stat-value text-success">{{ stats.total_revenue | moneda }}</div>
+    <div class="stat-change">+{{ stats.revenue_month | moneda }} este mes</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">⚙️ Jobs totales</div>
+    <div class="stat-value">{{ stats.total_jobs }}</div>
+    <div class="stat-change">{{ stats.jobs_today }} hoy</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">🪙 Créditos vendidos</div>
+    <div class="stat-value text-accent">{{ stats.credits_sold }}</div>
+    <div class="stat-change">{{ stats.active_users }} usuarios activos/30d</div>
+  </div>
+</div>
+
+<!-- Links rápidos admin -->
+<div class="grid-4 mb-3">
+  {% for link in [
+    ('admin.users','👥 Usuarios', 'Gestionar cuentas'),
+    ('admin.plans','💎 Planes', 'Editar precios'),
+    ('admin.services','⚙️ Servicios', 'Costos por servicio'),
+    ('admin.coupons','🎟️ Cupones', 'Crear descuentos'),
+    ('admin.payments','💳 Pagos', 'Ver transacciones'),
+    ('admin.jobs','📋 Jobs', 'Logs del sistema'),
+  ] %}
+  <a href="{{ url_for(link[0]) }}" class="card" style="text-decoration:none;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+    <div style="font-size:1.5rem;margin-bottom:6px;">{{ link[1].split(' ')[0] }}</div>
+    <div class="font-bold text-sm">{{ link[1].split(' ', 1)[1] }}</div>
+    <div class="text-xs text-muted">{{ link[2] }}</div>
+  </a>
+  {% endfor %}
+</div>
+
+<!-- Gráfico de ingresos -->
+<div class="grid-2 mb-3">
+  <div class="card">
+    <div class="card-title">📈 Ingresos últimos 6 meses</div>
+    <canvas id="revenueChart" height="200"></canvas>
+  </div>
+  <div class="card">
+    <div class="card-title">⭐ Servicios más usados</div>
+    {% if top_services %}
+    <table style="width:100%;">
+      {% for name, count in top_services %}
+      <tr>
+        <td class="text-sm" style="padding:8px 0;">{{ name }}</td>
+        <td style="text-align:right;" class="text-accent font-bold">{{ count }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% else %}
+    <p class="text-muted text-sm">Sin datos todavía.</p>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Pagos recientes -->
+<div class="card">
+  <div class="card-title">💳 Pagos recientes</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Usuario</th><th>Descripción</th><th>Monto</th><th>Estado</th><th>Fecha</th></tr></thead>
+      <tbody>
+        {% for p in recent_payments %}
+        <tr>
+          <td class="text-sm">{{ p.user.email if p.user else '—' }}</td>
+          <td>{{ p.description or '—' }}</td>
+          <td class="font-bold text-success">{{ p.amount | moneda }}</td>
+          <td><span class="badge badge-success">Completado</span></td>
+          <td class="text-muted text-xs">{{ p.created_at | fecha }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="text-muted" style="text-align:center;padding:24px;">Sin pagos todavía.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const data = {{ revenue_chart | safe }};
+const ctx = document.getElementById('revenueChart').getContext('2d');
+new Chart(ctx, {
+  type: 'bar',
+  data: {
+    labels: data.map(d => d.month),
+    datasets: [{
+      label: 'Ingresos USD',
+      data: data.map(d => d.revenue),
+      backgroundColor: 'rgba(99,102,241,0.6)',
+      borderColor: '#6366f1',
+      borderWidth: 1,
+      borderRadius: 6,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+      y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', callback: v => '$' + v } }
+    }
+  }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}Trabajo #{{ job.id }} — {{ app_name }}{% endblock %}
+{% block page_title %}Trabajo #{{ job.id }}{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="grid-2 mb-3">
+    <div>
+      <p class="text-muted text-xs">Servicio</p>
+      <p class="font-bold">{{ job.service.name if job.service else '—' }}</p>
+    </div>
+    <div>
+      <p class="text-muted text-xs">Estado</p>
+      {% if job.status == 'completed' %}<span class="badge badge-success">✅ Completado</span>
+      {% elif job.status == 'running' %}<span class="badge badge-info">⏳ Corriendo</span>
+      {% elif job.status == 'failed' %}<span class="badge badge-danger">❌ Error</span>
+      {% else %}<span class="badge badge-neutral">⏸ {{ job.status }}</span>{% endif %}
+    </div>
+    <div>
+      <p class="text-muted text-xs">Créditos usados</p>
+      <p class="text-danger font-bold">-{{ job.credits_used }}</p>
+    </div>
+    <div>
+      <p class="text-muted text-xs">Iniciado</p>
+      <p>{{ job.created_at | fecha }}</p>
+    </div>
+    {% if job.completed_at %}
+    <div>
+      <p class="text-muted text-xs">Completado</p>
+      <p>{{ job.completed_at | fecha }}</p>
+    </div>
+    <div>
+      <p class="text-muted text-xs">Duración</p>
+      <p>{{ "%.0f"|format(job.duration_seconds()) }}s</p>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if job.error_message %}
+  <div class="alert alert-danger">
+    <strong>Error:</strong><br>
+    <pre style="white-space:pre-wrap;font-size:0.8rem;margin-top:8px;">{{ job.error_message }}</pre>
+  </div>
+  {% endif %}
+
+  {% if job.get_output().get('stdout') %}
+  <div>
+    <p class="text-muted text-xs mb-1">Salida del proceso:</p>
+    <pre style="background:var(--bg3);border-radius:8px;padding:16px;font-size:0.8rem;white-space:pre-wrap;overflow-x:auto;max-height:400px;overflow-y:auto;">{{ job.get_output().stdout }}</pre>
+  </div>
+  {% endif %}
+
+  <div class="mt-2">
+    <a href="{{ url_for('dashboard.jobs') }}" class="btn btn-outline btn-sm">← Volver</a>
+  </div>
+</div>
+{% endblock %}

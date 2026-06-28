@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Usuarios — Admin{% endblock %}
+{% block page_title %}👥 Gestión de usuarios{% endblock %}
+{% block content %}
+<div class="flex justify-between items-center mb-3">
+  <form class="flex gap-2" method="GET">
+    <input name="q" value="{{ q }}" class="form-control" placeholder="Buscar por email o nombre..." style="width:280px;">
+    <button type="submit" class="btn btn-outline">Buscar</button>
+  </form>
+  <span class="text-muted text-sm">{{ users.total }} usuarios</span>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>ID</th><th>Nombre</th><th>Email</th><th>Rol</th><th>Créditos</th><th>Verificado</th><th>Activo</th><th>Registro</th><th>Acciones</th></tr></thead>
+      <tbody>
+        {% for u in users.items %}
+        <tr>
+          <td class="text-muted text-xs">{{ u.id }}</td>
+          <td class="font-bold">{{ u.username }}</td>
+          <td class="text-sm">{{ u.email }}</td>
+          <td>
+            {% if u.role == 'admin' %}<span class="badge badge-warning">Admin</span>
+            {% else %}<span class="badge badge-neutral">Usuario</span>{% endif %}
+          </td>
+          <td class="text-accent font-bold">{{ u.credits }}</td>
+          <td>{% if u.email_verified %}✅{% else %}❌{% endif %}</td>
+          <td>{% if u.is_active %}✅{% else %}❌{% endif %}</td>
+          <td class="text-muted text-xs">{{ u.created_at | fecha }}</td>
+          <td>
+            <a href="{{ url_for('admin.user_detail', user_id=u.id) }}" class="btn btn-outline btn-sm">Ver</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if users.pages > 1 %}
+  <div class="flex gap-2 mt-2">
+    {% for p in users.iter_pages() %}
+      {% if p %}<a href="?page={{ p }}&q={{ q }}" class="btn btn-sm {% if p == users.page %}btn-primary{% else %}btn-outline{% endif %}">{{ p }}</a>
+      {% else %}<span class="text-muted">…</span>{% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

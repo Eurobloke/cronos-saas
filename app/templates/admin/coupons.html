@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block title %}Cupones — Admin{% endblock %}
+{% block page_title %}🎟️ Cupones y descuentos{% endblock %}
+{% block content %}
+<div class="grid-2 mb-3">
+  <!-- Nuevo cupón -->
+  <div class="card">
+    <div class="card-title">Crear nuevo cupón</div>
+    <form id="new-coupon-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="form-group">
+        <label class="form-label">Código</label>
+        <input name="code" id="c-code" class="form-control" placeholder="PROMO2025" required style="text-transform:uppercase;">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Descripción</label>
+        <input name="description" id="c-desc" class="form-control" placeholder="Descuento de lanzamiento">
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Tipo</label>
+          <select name="discount_type" id="c-type" class="form-control">
+            <option value="percent">Porcentaje (%)</option>
+            <option value="fixed">Monto fijo ($)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Valor</label>
+          <input name="discount_value" id="c-value" type="number" step="0.01" class="form-control" placeholder="20">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Usos máximos (vacío = ilimitado)</label>
+        <input name="max_uses" id="c-uses" type="number" class="form-control" placeholder="100">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Válido hasta (vacío = sin fecha)</label>
+        <input name="valid_until" id="c-until" type="datetime-local" class="form-control">
+      </div>
+      <button type="submit" class="btn btn-primary">+ Crear cupón</button>
+    </form>
+  </div>
+
+  <!-- Lista de cupones -->
+  <div class="card">
+    <div class="card-title">Cupones activos</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Código</th><th>Descuento</th><th>Usos</th><th>Activo</th><th></th></tr></thead>
+        <tbody>
+          {% for c in coupons %}
+          <tr>
+            <td class="font-bold">{{ c.code }}</td>
+            <td>
+              {% if c.discount_type == 'percent' %}{{ c.discount_value }}%
+              {% else %}${{ c.discount_value }}{% endif %}
+            </td>
+            <td class="text-xs">{{ c.times_used }}{% if c.max_uses %}/{{ c.max_uses }}{% endif %}</td>
+            <td><span class="badge {% if c.is_active and c.is_valid() %}badge-success{% else %}badge-neutral{% endif %}">
+              {{ '✅' if c.is_active and c.is_valid() else '❌' }}
+            </span></td>
+            <td>
+              <button onclick="toggleCoupon({{ c.id }}, this)" class="btn btn-outline btn-sm">
+                {{ 'Desactivar' if c.is_active else 'Activar' }}
+              </button>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" class="text-muted text-sm" style="padding:20px;">Sin cupones.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.getElementById('new-coupon-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const payload = {
+    code: document.getElementById('c-code').value,
+    description: document.getElementById('c-desc').value,
+    discount_type: document.getElementById('c-type').value,
+    discount_value: document.getElementById('c-value').value,
+    max_uses: document.getElementById('c-uses').value || null,
+    valid_until: document.getElementById('c-until').value || null,
+  };
+  const data = await apiPost('/admin/coupons/new', payload);
+  if (data.ok) { showToast('Cupón creado ✅'); location.reload(); }
+  else showToast('Error: ' + (data.error || 'desconocido'), 'danger');
+});
+
+async function toggleCoupon(id, btn) {
+  const data = await apiPost(`/admin/coupons/${id}/toggle`);
+  if (data.active !== undefined) {
+    btn.textContent = data.active ? 'Desactivar' : 'Activar';
+    showToast(data.active ? 'Cupón activado' : 'Cupón desactivado');
+  }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>{% block title %}{{ app_name }}{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/cronos.css') }}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <h1>⚡ {{ app_name }}</h1>
+    <span>Panel de control</span>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section">Principal</div>
+    <a href="{{ url_for('dashboard.index') }}" class="nav-link {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
+      <span class="nav-icon">🏠</span> Inicio
+    </a>
+    <a href="{{ url_for('dashboard.chat') }}" class="nav-link {% if request.endpoint == 'dashboard.chat' %}active{% endif %}" style="background:{% if request.endpoint == 'dashboard.chat' %}rgba(99,102,241,0.25){% else %}linear-gradient(90deg,rgba(99,102,241,0.1),transparent){% endif %}">
+      <span class="nav-icon">🤖</span> <strong>Asistente IA</strong>
+    </a>
+    <a href="{{ url_for('dashboard.niche_setup') }}" class="nav-link {% if request.endpoint == 'dashboard.niche_setup' %}active{% endif %}">
+      <span class="nav-icon">📺</span> Mi Canal
+    </a>
+    <a href="{{ url_for('dashboard.cadena') }}" class="nav-link {% if request.endpoint == 'dashboard.cadena' %}active{% endif %}">
+      <span class="nav-icon">🔗</span> Modo Cadena
+    </a>
+    <a href="{{ url_for('dashboard.services') }}" class="nav-link {% if 'service' in (request.endpoint or '') %}active{% endif %}">
+      <span class="nav-icon">⚙️</span> Servicios
+    </a>
+    <a href="{{ url_for('dashboard.jobs') }}" class="nav-link {% if 'job' in (request.endpoint or '') %}active{% endif %}">
+      <span class="nav-icon">📋</span> Mis trabajos
+    </a>
+
+    <div class="nav-section">Cuenta</div>
+    <a href="{{ url_for('payments.plans') }}" class="nav-link {% if request.endpoint and 'payment' in request.endpoint %}active{% endif %}">
+      <span class="nav-icon">💎</span> Planes y créditos
+    </a>
+    <a href="{{ url_for('dashboard.credits') }}" class="nav-link">
+      <span class="nav-icon">🪙</span> Historial créditos
+    </a>
+    <a href="{{ url_for('dashboard.billing') }}" class="nav-link">
+      <span class="nav-icon">🧾</span> Facturación
+    </a>
+    <a href="{{ url_for('dashboard.notifications') }}" class="nav-link">
+      <span class="nav-icon">🔔</span> Notificaciones
+      {% if unread_notifications > 0 %}
+      <span class="badge badge-danger">{{ unread_notifications }}</span>
+      {% endif %}
+    </a>
+    <a href="{{ url_for('dashboard.settings') }}" class="nav-link">
+      <span class="nav-icon">⚙️</span> Configuración
+    </a>
+
+    {% if current_user.is_admin() %}
+    <div class="nav-section">Administración</div>
+    <a href="{{ url_for('admin.index') }}" class="nav-link {% if request.blueprint == 'admin' %}active{% endif %}">
+      <span class="nav-icon">🛡️</span> Panel Admin
+    </a>
+    {% endif %}
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="credit-badge mb-1">
+      🪙 Créditos: <strong>{{ current_user.credits }}</strong>
+    </div>
+    <a href="{{ url_for('auth.logout') }}" class="nav-link">
+      <span class="nav-icon">🚪</span> Cerrar sesión
+    </a>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <div class="flex items-center gap-2">
+      <button id="menu-toggle" class="btn btn-ghost btn-sm" style="display:none">☰</button>
+      <span class="topbar-title">{% block page_title %}{% endblock %}</span>
+    </div>
+    <div class="topbar-actions">
+      {% if not current_user.email_verified %}
+      <a href="{{ url_for('auth.resend_verify') }}" class="badge badge-warning">⚠️ Verifica tu email</a>
+      {% endif %}
+      <span class="text-sm text-muted">{{ current_user.username }}</span>
+    </div>
+  </div>
+
+  <div class="content">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+      <div class="alert alert-{{ category }}" data-auto-dismiss>{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/cronos.js') }}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

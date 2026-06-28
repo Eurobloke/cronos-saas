@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block title %}Servicios — Admin{% endblock %}
+{% block page_title %}⚙️ Gestión de servicios{% endblock %}
+{% block content %}
+<div class="card">
+  <p class="text-muted text-sm mb-3">Edita el costo en créditos y el precio USD de cada servicio. Los cambios aplican de inmediato.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Icono</th><th>Nombre</th><th>Categoría</th><th>Créditos</th><th>Precio USD</th><th>Activo</th><th>Acciones</th></tr></thead>
+      <tbody>
+        {% for svc in services %}
+        <tr id="svc-{{ svc.id }}">
+          <td>{{ svc.icon }}</td>
+          <td class="font-bold">{{ svc.name }}</td>
+          <td class="text-muted text-xs">{{ svc.category }}</td>
+          <td>
+            <input type="number" class="form-control" style="width:80px;" value="{{ svc.credit_cost }}"
+              id="credits-{{ svc.id }}" min="0">
+          </td>
+          <td>
+            <input type="number" class="form-control" style="width:90px;" value="{{ svc.price_usd }}"
+              id="price-{{ svc.id }}" min="0" step="0.01">
+          </td>
+          <td><span id="active-{{ svc.id }}" class="badge {% if svc.is_active %}badge-success{% else %}badge-neutral{% endif %}">
+            {{ '✅ Activo' if svc.is_active else '❌ Inactivo' }}</span>
+          </td>
+          <td>
+            <button onclick="saveService({{ svc.id }}, {{ svc.is_active | lower }})" class="btn btn-primary btn-sm">Guardar</button>
+            <button onclick="toggleService({{ svc.id }}, {{ svc.is_active | lower }})" class="btn btn-outline btn-sm">
+              {{ 'Desactivar' if svc.is_active else 'Activar' }}
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+async function saveService(id, isActive) {
+  const credits = parseInt(document.getElementById('credits-'+id).value);
+  const price = parseFloat(document.getElementById('price-'+id).value);
+  const data = await apiPost(`/admin/services/${id}/edit`, { credit_cost: credits, price_usd: price, is_active: isActive });
+  if (data.ok) showToast('Servicio guardado ✅');
+}
+async function toggleService(id, isActive) {
+  const credits = parseInt(document.getElementById('credits-'+id).value);
+  const price = parseFloat(document.getElementById('price-'+id).value);
+  const newActive = !isActive;
+  const data = await apiPost(`/admin/services/${id}/edit`, { credit_cost: credits, price_usd: price, is_active: newActive });
+  if (data.ok) {
+    const badge = document.getElementById('active-'+id);
+    badge.textContent = newActive ? '✅ Activo' : '❌ Inactivo';
+    badge.className = newActive ? 'badge badge-success' : 'badge badge-neutral';
+    showToast(newActive ? 'Servicio activado' : 'Servicio desactivado');
+    location.reload();
+  }
+}
+</script>
+{% endblock %}
