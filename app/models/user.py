@@ -62,19 +62,30 @@ class User(UserMixin, db.Model):
 
     def consume_credits(self, amount: int, description: str, reference: str = None) -> bool:
         from app.models.credit_transaction import CreditTransaction
+        # Admins nunca se quedan sin créditos
+        if self.is_admin():
+            tx = CreditTransaction(
+                user_id=self.id, amount=amount, type='debit',
+                description=description, reference=reference,
+                balance_after=self.credits  # no cambia
+            )
+            db.session.add(tx)
+            return True
         if self.credits < amount:
             return False
         self.credits -= amount
         tx = CreditTransaction(
-            user_id=self.id,
-            amount=amount,
-            type='debit',
-            description=description,
-            reference=reference,
+            user_id=self.id, amount=amount, type='debit',
+            description=description, reference=reference,
             balance_after=self.credits
         )
         db.session.add(tx)
         return True
+
+    @property
+    def plan(self):
+        """Retorna la suscripción activa del usuario, o None."""
+        return self.active_subscription.plan if self.active_subscription else None
 
     @property
     def active_subscription(self):

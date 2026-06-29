@@ -4,24 +4,94 @@
 {% block content %}
 
 <!-- Saldo actual -->
-<div class="alert alert-info mb-3">
-  🪙 Tienes <strong>{{ current_user.credits }} créditos</strong> disponibles.
+<div class="alert alert-info mb-3" style="display:flex;justify-content:space-between;align-items:center;">
+  <div>🪙 Tienes <strong>{{ current_user.credits }} créditos</strong> disponibles.</div>
+  <div class="text-sm text-muted">Plan actual: <strong style="color:var(--accent2);">{{ current_user.plan.name if current_user.plan else 'Gratuito' }}</strong></div>
+</div>
+
+<!-- Comparativa de planes -->
+<div class="card mb-3" style="background:rgba(99,102,241,0.05);border-color:rgba(99,102,241,0.2);">
+  <div class="card-title mb-2">📊 Comparativa de planes</div>
+  <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;font-size:0.88rem;">
+      <thead>
+        <tr style="border-bottom:2px solid var(--border);">
+          <th style="text-align:left;padding:8px 12px;color:var(--text-muted);">Característica</th>
+          <th style="text-align:center;padding:8px 12px;">🆓 Gratuito</th>
+          <th style="text-align:center;padding:8px 12px;color:var(--accent);">⭐ Starter</th>
+          <th style="text-align:center;padding:8px 12px;color:var(--accent2);background:rgba(99,102,241,0.08);border-radius:4px;">🚀 Creator</th>
+          <th style="text-align:center;padding:8px 12px;color:#f59e0b;">🏢 Agency</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:10px 12px;font-weight:600;">💰 Precio mensual</td>
+          <td style="text-align:center;padding:10px 12px;">$0</td>
+          <td style="text-align:center;padding:10px 12px;color:var(--accent);font-weight:700;">$4.99</td>
+          <td style="text-align:center;padding:10px 12px;color:var(--accent2);font-weight:700;background:rgba(99,102,241,0.05);">$12.99</td>
+          <td style="text-align:center;padding:10px 12px;color:#f59e0b;font-weight:700;">$29.99</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:10px 12px;font-weight:600;">🪙 Créditos/mes</td>
+          <td style="text-align:center;padding:10px 12px;">10 <span class="text-muted text-xs">(solo al registrarse)</span></td>
+          <td style="text-align:center;padding:10px 12px;font-weight:700;">150</td>
+          <td style="text-align:center;padding:10px 12px;font-weight:700;background:rgba(99,102,241,0.05);">600</td>
+          <td style="text-align:center;padding:10px 12px;font-weight:700;">2,500</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:10px 12px;font-weight:600;">💾 Almacenamiento</td>
+          <td style="text-align:center;padding:10px 12px;">500 MB</td>
+          <td style="text-align:center;padding:10px 12px;">2 GB</td>
+          <td style="text-align:center;padding:10px 12px;background:rgba(99,102,241,0.05);">10 GB</td>
+          <td style="text-align:center;padding:10px 12px;">50 GB</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:10px 12px;font-weight:600;">🤖 Peticiones IA/día</td>
+          <td style="text-align:center;padding:10px 12px;">15</td>
+          <td style="text-align:center;padding:10px 12px;">50</td>
+          <td style="text-align:center;padding:10px 12px;background:rgba(99,102,241,0.05);">200</td>
+          <td style="text-align:center;padding:10px 12px;">Ilimitadas</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:10px 12px;font-weight:600;">🤖 Bots disponibles</td>
+          <td style="text-align:center;padding:10px 12px;">—</td>
+          <td style="text-align:center;padding:10px 12px;">Todos</td>
+          <td style="text-align:center;padding:10px 12px;background:rgba(99,102,241,0.05);">Todos + prioridad</td>
+          <td style="text-align:center;padding:10px 12px;">Todos + API</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:10px 12px;font-weight:600;">📺 Canales YouTube</td>
+          <td style="text-align:center;padding:10px 12px;">—</td>
+          <td style="text-align:center;padding:10px 12px;">1</td>
+          <td style="text-align:center;padding:10px 12px;background:rgba(99,102,241,0.05);">5</td>
+          <td style="text-align:center;padding:10px 12px;">Ilimitados</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 12px;font-weight:600;">🎧 Soporte</td>
+          <td style="text-align:center;padding:10px 12px;">Comunidad</td>
+          <td style="text-align:center;padding:10px 12px;">Email</td>
+          <td style="text-align:center;padding:10px 12px;background:rgba(99,102,241,0.05);">Prioritario</td>
+          <td style="text-align:center;padding:10px 12px;">24/7 Dedicado</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </div>
 
 <!-- Packs de créditos -->
-<h2 class="mb-2" style="font-size:1.2rem;font-weight:800;">Packs de créditos (pago único)</h2>
+<h2 class="mb-2" style="font-size:1.1rem;font-weight:800;">⚡ Packs de créditos (pago único, sin suscripción)</h2>
 <div class="grid-3 mb-3">
   {% for pack in packs %}
   <div class="plan-card {% if pack.popular %}popular{% endif %}">
     {% if pack.popular %}<span class="plan-popular-badge">⭐ Más popular</span>{% endif %}
     <div class="font-bold mb-1" style="font-size:1.1rem;">{{ pack.label }}</div>
     <div class="plan-price mb-1">${{ pack.price }}<span> USD</span></div>
-    <div class="text-accent font-bold mb-3">🪙 {{ pack.credits }} créditos</div>
+    <div class="text-accent font-bold mb-2">🪙 {{ pack.credits }} créditos</div>
+    <div class="text-xs text-muted mb-3">Sin suscripción — úsalos cuando quieras</div>
     <form method="POST" action="{{ url_for('payments.buy_credits', pack_id=pack.id) }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="form-group mb-2">
         <input id="coupon-input" name="coupon" class="form-control" placeholder="Cupón (opcional)">
-        <div id="coupon-status" class="form-hint mt-1"></div>
       </div>
       <button type="submit" class="btn btn-primary w-full" style="justify-content:center;">
         💳 Comprar con PayPal
@@ -34,34 +104,45 @@
 <div class="divider"></div>
 
 <!-- Planes de suscripción -->
-<h2 class="mb-2" style="font-size:1.2rem;font-weight:800;">Suscripciones mensuales / anuales</h2>
+<h2 class="mb-1" style="font-size:1.1rem;font-weight:800;">📦 Suscripciones — créditos automáticos cada mes</h2>
+<p class="text-muted text-sm mb-3">Los créditos se renuevan el 1 de cada mes. Cancela cuando quieras.</p>
 <div class="grid-3 mb-3">
   {% for plan in plans %}
+  {% set storage_map = {'starter':'2 GB','creator':'10 GB','agency':'50 GB'} %}
+  {% set ai_map = {'starter':'50/día','creator':'200/día','agency':'Ilimitadas'} %}
   <div class="plan-card {% if plan.is_popular %}popular{% endif %}">
-    {% if plan.is_popular %}<span class="plan-popular-badge">⭐ Más popular</span>{% endif %}
-    <div class="font-bold mb-1" style="font-size:1.1rem;">{{ plan.name }}</div>
+    {% if plan.is_popular %}<span class="plan-popular-badge">🚀 Más popular</span>{% endif %}
+    <div class="font-bold mb-1" style="font-size:1.2rem;">{{ plan.name }}</div>
     <p class="text-muted text-sm mb-2">{{ plan.description }}</p>
     <div class="plan-price">${{ "%.2f"|format(plan.price_monthly) }}<span>/mes</span></div>
-    <div class="text-muted text-xs mb-1">o ${{ "%.2f"|format(plan.price_annual) }}/año
+    <div class="text-muted text-xs mb-1">
+      o ${{ "%.2f"|format(plan.price_annual) }}/año
       {% if plan.annual_savings_percent() > 0 %}
       <span class="badge badge-success">Ahorra {{ plan.annual_savings_percent() }}%</span>
       {% endif %}
     </div>
-    <div class="text-accent font-bold mb-3">🪙 {{ plan.credits_monthly }} créditos/mes</div>
+    <div class="text-accent font-bold mb-1">🪙 {{ plan.credits_monthly }} créditos/mes</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+      <span class="badge badge-info">💾 {{ storage_map.get(plan.slug,'?') }}</span>
+      <span class="badge badge-neutral">🤖 {{ ai_map.get(plan.slug,'?') }}</span>
+    </div>
     {% for feature in plan.get_features() %}
-    <div class="plan-feature">{{ feature }}</div>
+    <div class="plan-feature">✓ {{ feature }}</div>
     {% endfor %}
     <div class="divider"></div>
     <form method="POST" action="{{ url_for('payments.buy_plan', plan_id=plan.id, billing='monthly') }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button type="submit" class="btn btn-primary w-full mb-1" style="justify-content:center;">
-        💳 Mensual — ${{ "%.2f"|format(plan.price_monthly) }}
+        💳 Mensual — ${{ "%.2f"|format(plan.price_monthly) }}/mes
       </button>
     </form>
     <form method="POST" action="{{ url_for('payments.buy_plan', plan_id=plan.id, billing='annual') }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button type="submit" class="btn btn-outline w-full" style="justify-content:center;">
-        💳 Anual — ${{ "%.2f"|format(plan.price_annual) }}
+        💳 Anual — ${{ "%.2f"|format(plan.price_annual) }}/año
+        {% if plan.annual_savings_percent() > 0 %}
+        <span class="badge badge-success ml-1">-{{ plan.annual_savings_percent() }}%</span>
+        {% endif %}
       </button>
     </form>
   </div>
@@ -69,7 +150,11 @@
 </div>
 
 <div class="alert alert-info" style="font-size:0.85rem;">
-  🔒 Todos los pagos son procesados de forma segura por <strong>PayPal</strong>.
-  No almacenamos datos de tarjetas. Puedes cancelar en cualquier momento.
+  🔒 Pagos procesados de forma segura por <strong>PayPal</strong>.
+  No almacenamos datos de tarjetas. Cancela en cualquier momento sin penalización.
+  <br><br>
+  💡 <strong>¿Por qué somos más baratos?</strong> Usamos IA local (sin costos de API externos por cada video),
+  lo que nos permite ofrecerte precios 3–5× menores que la competencia.
 </div>
+
 {% endblock %}

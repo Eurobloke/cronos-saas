@@ -3,7 +3,7 @@ from datetime import datetime, timezone, timedelta
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, current_app, abort
 from flask_login import login_required, current_user
 
-from app.extensions import db
+from app.extensions import db, csrf
 from app.models import Plan, Payment, Subscription, Coupon
 from app.services.paypal_service import paypal
 from app.services import credit_service, email_service
@@ -223,6 +223,96 @@ def success(payment_id):
 def cancel():
     flash('Pago cancelado. No se realizó ningún cargo.', 'info')
     return render_template('payments/cancel.html')
+
+
+@payments_bp.route('/webhook', methods=['POST'])
+@csrf.exempt
+def paypal_webhook():
+    """
+    PayPal llama aquí cuando un pago se completa, aunque el usuario
+    cierre el navegador antes del redirect. Es la capa de seguridad extra.
+    """
+    import json as _json
+    body = request.get_data()
+    event = _json.loads(body) if body else {}
+    event_type = event.get('event_type', '')
+
+    # Verificar firma del webhook (si PAYPAL_WEBHOOK_ID está configurado)
+    webhook_id = current_app.config.get('PAYPAL_WEBHOOK_ID', '')
+    if webhook_id:
+        valid = paypal.verify_webhook(dict(request.headers), body, webhook_id)
+        if not valid:
+            current_app.logger.warning('[Webhook] Firma inválida — ignorado')
+            return jsonify({'ok': False}), 400
+
+    # Solo procesamos captura completada
+    if event_type != 'PAYMENT.CAPTURE.COMPLETED':
+        return jsonify({'ok': True, 'skipped': event_type})
+
+    try:
+        resource = event.get('resource', {})
+        order_id = (resource.get('supplementary_data', {})
+                    .get('related_ids', {}).get('order_id'))
+        capture_id = resource.get('id')
+        payer_email = (event.get('resource', {})
+                       .get('payer', {}).get('email_address', ''))
+        amount = float(resource.get('amount', {}).get('value', 0))
+
+        if not order_id and not capture_id:
+            return jsonify({'ok': True, 'msg': 'sin order_id'})
+
+        # Buscar pago pendiente por order_id o capture_id
+        payment = None
+        if order_id:
+            payment = Payment.query.filter_by(paypal_order_id=order_id).first()
+        if not payment and capture_id:
+            payment = Payment.query.filter_by(paypal_capture_id=capture_id).first()
+
+        if not payment:
+            current_app.logger.info(f'[Webhook] Pago no encontrado: order={order_id} cap={capture_id}')
+            return jsonify({'ok': True, 'msg': 'pago no encontrado'})
+
+        if payment.status == 'completed':
+            return jsonify({'ok': True, 'msg': 'ya procesado'})
+
+        # Marcar como completado y otorgar créditos
+        payment.status = 'completed'
+        payment.paypal_capture_id = capture_id or payment.paypal_capture_id
+        payment.paypal_payer_email = payer_email
+        payment.completed_at = datetime.now(timezone.utc)
+
+        user = payment.user
+        credit_service.grant_credits(
+            user, payment.credits_granted,
+            f'[Webhook] {payment.description}',
+            reference=f'payment:{payment.id}'
+        )
+
+        # Activar plan si aplica
+        if payment.plan_id:
+            months = 12 if payment.type == 'plan_annual' else 1
+            expires = datetime.now(timezone.utc) + timedelta(days=30 * months)
+            existing = Subscription.query.filter_by(
+                user_id=user.id, plan_id=payment.plan_id, status='active'
+            ).first()
+            if not existing:
+                sub = Subscription(
+                    user_id=user.id, plan_id=payment.plan_id,
+                    billing_cycle=payment.type.replace('plan_', ''),
+                    status='active', expires_at=expires,
+                )
+                db.session.add(sub)
+
+        db.session.commit()
+        email_service.send_purchase_confirmation(user, payment)
+        current_app.logger.info(f'[Webhook] Pago #{payment.id} procesado vía webhook. {payment.credits_granted} créditos a {user.email}')
+
+    except Exception as e:
+        current_app.logger.error(f'[Webhook] Error procesando: {e}')
+        db.session.rollback()
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
+    return jsonify({'ok': True})
 
 
 @payments_bp.route('/validate-coupon', methods=['POST'])

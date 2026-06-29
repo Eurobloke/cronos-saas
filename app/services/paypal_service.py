@@ -109,6 +109,27 @@ class PayPalService:
         resp.raise_for_status()
         return resp.json()
 
+    def verify_webhook(self, headers: dict, body: bytes, webhook_id: str) -> bool:
+        """Verifica la firma del webhook llamando a la API de PayPal."""
+        try:
+            payload = {
+                'auth_algo':         headers.get('PAYPAL-AUTH-ALGO', ''),
+                'cert_url':          headers.get('PAYPAL-CERT-URL', ''),
+                'transmission_id':   headers.get('PAYPAL-TRANSMISSION-ID', ''),
+                'transmission_sig':  headers.get('PAYPAL-TRANSMISSION-SIG', ''),
+                'transmission_time': headers.get('PAYPAL-TRANSMISSION-TIME', ''),
+                'webhook_id':        webhook_id,
+                'webhook_event':     body.decode('utf-8'),
+            }
+            resp = requests.post(
+                f'{self._base_url()}/v1/notifications/verify-webhook-signature',
+                json=payload, headers=self._headers(), timeout=15,
+            )
+            data = resp.json()
+            return data.get('verification_status') == 'SUCCESS'
+        except Exception:
+            return False
+
     def refund_capture(self, capture_id: str, amount: float | None = None) -> dict:
         payload = {}
         if amount:

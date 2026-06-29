@@ -185,10 +185,17 @@ def _execute_chain(app, job_id: int):
 
             t_start = time.time()
 
+            def update_fn(msg, _db=db, _job=job, _sr=step_results, _i=i, _pb=prog_base):
+                _job.progress_message = f'🔧 {msg}'
+                p = _job.get_params()
+                p['_step_results'] = _sr
+                _job.set_params(p)
+                _db.session.commit()
+
             if block.get('pipeline') == 'horoscopo':
                 success, out = _run_horoscopo_pipeline(bots_dir, step.get('params', {}), db, job, step_results, i, prog_base, prog_next, total)
             else:
-                success, out = _run_script(block, bots_dir, step.get('params', {}))
+                success, out = _run_script(block, bots_dir, step.get('params', {}), update_fn=update_fn)
 
             duration = round(time.time() - t_start)
             step_results[i]['duration'] = duration
@@ -211,7 +218,9 @@ def _execute_chain(app, job_id: int):
         _notify(db, job.user_id, job_id, True, None)
 
 
-def _run_script(block: dict, bots_dir: Path, params: dict) -> tuple:
+def _run_script(block: dict, bots_dir: Path, params: dict, update_fn=None) -> tuple:
+    from app.services.auto_fix import ejecutar_con_autofix
+
     script_rel = block.get('script')
     if not script_rel:
         return False, f'Bloque {block["slug"]} no tiene script configurado.'
@@ -220,21 +229,18 @@ def _run_script(block: dict, bots_dir: Path, params: dict) -> tuple:
     if not script.exists():
         return False, f'Script no encontrado: {script}'
 
-    cmd = [sys.executable, str(script)]
+    cmd_extra = []
     fecha = params.get('fecha')
     if fecha and fecha != 'hoy':
-        cmd.append(fecha)
+        cmd_extra.append(fecha)
 
-    result = subprocess.run(
-        cmd,
-        capture_output=True, text=True,
+    return ejecutar_con_autofix(
+        script_name=script.name,
+        bot_dir=script.parent,
+        cmd_extra=cmd_extra,
         timeout=3600,
-        cwd=str(script.parent),
-        encoding='utf-8', errors='replace',
+        update_fn=update_fn,
     )
-    if result.returncode == 0:
-        return True, result.stdout[-1000:]
-    return False, result.stderr[-1000:] or result.stdout[-500:]
 
 
 def _run_horoscopo_pipeline(bots_dir, params, db, job, step_results, step_idx, prog_base, prog_next, total_steps):

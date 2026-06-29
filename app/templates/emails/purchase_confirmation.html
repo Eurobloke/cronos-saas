@@ -1,22 +1,87 @@
 <!DOCTYPE html>
-<html><head><meta charset="UTF-8"><style>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
 body{font-family:Inter,system-ui,sans-serif;background:#0f172a;margin:0;padding:40px 20px;}
-.card{background:#1e293b;border-radius:16px;max-width:560px;margin:0 auto;padding:40px;color:#e2e8f0;}
-.row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #334155;}
-.btn{display:inline-block;background:#6366f1;color:white;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:700;margin:20px 0;}
-p{color:#94a3b8;line-height:1.7;}
-</style></head>
+.card{background:#1e293b;border-radius:16px;max-width:580px;margin:0 auto;padding:40px;color:#e2e8f0;}
+.header{text-align:center;margin-bottom:28px;}
+.badge{display:inline-block;background:#22c55e;color:#0f172a;font-weight:900;font-size:2rem;
+       width:64px;height:64px;border-radius:50%;line-height:64px;text-align:center;margin-bottom:12px;}
+.row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #334155;}
+.row:last-child{border:none;}
+.box{background:#0f172a;border-radius:10px;padding:20px;margin:20px 0;}
+.credits{font-size:2rem;font-weight:900;color:#818cf8;text-align:center;padding:16px;
+          background:#1e1b4b;border-radius:10px;margin:20px 0;}
+.btn{display:block;background:#6366f1;color:white;text-decoration:none;padding:14px 28px;
+     border-radius:10px;font-weight:700;text-align:center;margin:24px 0;}
+.footer{font-size:0.82rem;color:#475569;text-align:center;margin-top:24px;line-height:1.7;}
+p{color:#94a3b8;line-height:1.7;margin:8px 0;}
+</style>
+</head>
 <body>
 <div class="card">
-  <h1 style="font-weight:900;color:#22c55e;margin-bottom:8px;">✅ Pago confirmado</h1>
-  <p>Hola {{ user.username }}, tu pago fue procesado exitosamente.</p>
-  <div style="background:#0f172a;border-radius:8px;padding:20px;margin:20px 0;">
-    <div class="row"><span>Factura</span><strong>{{ payment.invoice_number }}</strong></div>
-    <div class="row"><span>Descripción</span><span>{{ payment.description }}</span></div>
-    <div class="row"><span>Monto</span><strong style="color:#22c55e;">${{ "%.2f"|format(payment.amount) }} USD</strong></div>
-    <div class="row" style="border:none;"><span>Créditos añadidos</span><strong style="color:#818cf8;">🪙 {{ payment.credits_granted }}</strong></div>
+
+  <div class="header">
+    <div class="badge">✅</div>
+    <h1 style="font-weight:900;color:#22c55e;margin:0 0 8px;">¡Pago confirmado!</h1>
+    <p style="margin:0;">Hola <strong style="color:#e2e8f0;">{{ user.username }}</strong>, tu compra fue procesada exitosamente.</p>
   </div>
-  <a href="{{ app_url }}/dashboard/billing" class="btn">📄 Descargar factura</a>
-  <p style="font-size:0.85rem;">Gracias por confiar en {{ app_name }}.</p>
+
+  <!-- Créditos recibidos -->
+  <div class="credits">
+    🪙 +{{ payment.credits_granted }} créditos
+    <div style="font-size:1rem;font-weight:400;color:#a5b4fc;margin-top:4px;">Ya están disponibles en tu cuenta</div>
+  </div>
+
+  <!-- Detalles del pago -->
+  <div class="box">
+    <div class="row">
+      <span style="color:#64748b;">N° Factura</span>
+      <strong style="font-size:0.9rem;">{{ payment.invoice_number }}</strong>
+    </div>
+    <div class="row">
+      <span style="color:#64748b;">Descripción</span>
+      <span>{{ payment.description }}</span>
+    </div>
+    <div class="row">
+      <span style="color:#64748b;">Monto pagado</span>
+      <strong style="color:#22c55e;font-size:1.1rem;">${{ "%.2f"|format(payment.amount) }} USD</strong>
+    </div>
+    {% if payment.discount_amount and payment.discount_amount > 0 %}
+    <div class="row">
+      <span style="color:#64748b;">Descuento cupón</span>
+      <span style="color:#22c55e;">-${{ "%.2f"|format(payment.discount_amount) }}</span>
+    </div>
+    {% endif %}
+    <div class="row">
+      <span style="color:#64748b;">Método de pago</span>
+      <span>💳 PayPal{% if payment.paypal_payer_email %} ({{ payment.paypal_payer_email }}){% endif %}</span>
+    </div>
+    <div class="row">
+      <span style="color:#64748b;">Fecha</span>
+      <span>{{ payment.completed_at.strftime('%d/%m/%Y %H:%M') if payment.completed_at else 'Ahora' }} UTC</span>
+    </div>
+    {% if payment.plan_id %}
+    <div class="row">
+      <span style="color:#64748b;">Plan activado</span>
+      <strong style="color:#818cf8;">{{ payment.plan.name if payment.plan else 'Plan' }}</strong>
+    </div>
+    {% endif %}
+  </div>
+
+  <a href="{{ app_url }}/dashboard/billing" class="btn">📄 Ver factura completa</a>
+  <a href="{{ app_url }}/dashboard" class="btn" style="background:#1e293b;border:2px solid #334155;">🚀 Ir al dashboard</a>
+
+  <p style="text-align:center;font-size:0.85rem;color:#475569;">
+    Si no realizaste esta compra, contáctanos de inmediato respondiendo este email.
+  </p>
+
+  <div class="footer">
+    Gracias por confiar en <strong style="color:#818cf8;">{{ app_name }}</strong>.<br>
+    Referencia PayPal: {{ payment.paypal_capture_id or payment.paypal_order_id or 'N/A' }}
+  </div>
+
 </div>
-</body></html>
+</body>
+</html>

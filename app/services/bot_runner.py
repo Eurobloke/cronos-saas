@@ -40,29 +40,37 @@ def _execute_job(app, job_id: int):
             if not script_path or not script_path.exists():
                 raise FileNotFoundError(f'Script no encontrado: {script_path}')
 
-            params = job.get_params()
-            cmd = [sys.executable, str(script_path)]
-            if params.get('fecha'):
-                cmd.append(params['fecha'])
+            from app.services.auto_fix import ejecutar_con_autofix
 
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
+            params = job.get_params()
+            cmd_extra = []
+            if params.get('fecha'):
+                cmd_extra.append(params['fecha'])
+
+            def update_fn(mensaje):
+                job.progress_message = f'🔧 {mensaje}'
+                db.session.commit()
+
+            job.progress = 10
+            job.progress_message = 'Ejecutando bot...'
+            db.session.commit()
+
+            success, output = ejecutar_con_autofix(
+                script_name=script_path.name,
+                bot_dir=script_path.parent,
+                cmd_extra=cmd_extra,
                 timeout=3600,
-                cwd=str(script_path.parent),
-                encoding='utf-8',
-                errors='replace',
+                update_fn=update_fn,
             )
 
             job.progress = 100
-            if result.returncode == 0:
+            if success:
                 job.status = 'completed'
-                job.set_output({'stdout': result.stdout[-3000:], 'returncode': 0})
+                job.set_output({'stdout': output[-3000:], 'returncode': 0})
                 _notify(db, job.user_id, job_id, 'success')
             else:
                 job.status = 'failed'
-                job.error_message = result.stderr[-2000:] or 'Error desconocido'
+                job.error_message = output[-2000:] or 'Error desconocido'
                 _notify(db, job.user_id, job_id, 'error')
 
         except subprocess.TimeoutExpired:

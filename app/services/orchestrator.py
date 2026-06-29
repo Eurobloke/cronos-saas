@@ -102,8 +102,9 @@ def _call_ollama(messages: list, niche_context: str) -> str:
         "model": OLLAMA_MODEL,
         "messages": [{"role": "system", "content": system}] + messages,
         "stream": False,
+        "keep_alive": "2m",  # Se libera de VRAM 2 min después del último uso
         "options": {
-            "temperature": 0.1,  # Más determinista para seguir instrucciones
+            "temperature": 0.1,
             "num_predict": 256,
         }
     }

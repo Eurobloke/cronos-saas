@@ -32,6 +32,20 @@
     <a href="{{ url_for('dashboard.cadena') }}" class="nav-link {% if request.endpoint == 'dashboard.cadena' %}active{% endif %}">
       <span class="nav-icon">🔗</span> Modo Cadena
     </a>
+
+    <div class="nav-section">Mis Bots</div>
+    <a href="{{ url_for('dashboard.bot_horoscopo') }}" class="nav-link {% if request.endpoint == 'dashboard.bot_horoscopo' %}active{% endif %}">
+      <span class="nav-icon">♈</span> Horóscopo Bot
+    </a>
+    <a href="{{ url_for('dashboard.bot_config', slug='motivacion') }}" class="nav-link {% if request.endpoint == 'dashboard.bot_config' and request.view_args.get('slug') == 'motivacion' %}active{% endif %}">
+      <span class="nav-icon">💪</span> Motivación Bot
+    </a>
+    <a href="{{ url_for('dashboard.bot_config', slug='noticias') }}" class="nav-link {% if request.endpoint == 'dashboard.bot_config' and request.view_args.get('slug') == 'noticias' %}active{% endif %}">
+      <span class="nav-icon">📰</span> Noticias RD Bot
+    </a>
+    <a href="{{ url_for('dashboard.bot_config', slug='cristiano') }}" class="nav-link {% if request.endpoint == 'dashboard.bot_config' and request.view_args.get('slug') == 'cristiano' %}active{% endif %}">
+      <span class="nav-icon">✝️</span> Cristiano Bot
+    </a>
     <a href="{{ url_for('dashboard.services') }}" class="nav-link {% if 'service' in (request.endpoint or '') %}active{% endif %}">
       <span class="nav-icon">⚙️</span> Servicios
     </a>
@@ -69,7 +83,7 @@
 
   <div class="sidebar-footer">
     <div class="credit-badge mb-1">
-      🪙 Créditos: <strong>{{ current_user.credits }}</strong>
+      🪙 Créditos: <strong>{% if current_user.is_admin() %}∞{% else %}{{ current_user.credits }}{% endif %}</strong>
     </div>
     <a href="{{ url_for('auth.logout') }}" class="nav-link">
       <span class="nav-icon">🚪</span> Cerrar sesión

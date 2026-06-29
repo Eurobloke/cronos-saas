@@ -3,24 +3,111 @@
 {% block page_title %}Inicio{% endblock %}
 {% block content %}
 
+<!-- Monitor GPU en tiempo real -->
+<div id="gpu-bar" class="card mb-2" style="padding:12px 20px;">
+  <div class="flex justify-between items-center">
+    <div class="flex items-center gap-2">
+      <span style="font-size:1.2rem;">🖥️</span>
+      <div>
+        <div class="text-sm font-bold">GPU — VRAM</div>
+        <div class="text-xs text-muted" id="gpu-detail">Verificando...</div>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <div style="width:160px;">
+        <div class="progress" style="height:8px;">
+          <div id="gpu-bar-fill" class="progress-bar" style="width:0%;transition:width 0.5s;"></div>
+        </div>
+        <div class="text-xs text-muted mt-1" id="gpu-pct">—</div>
+      </div>
+      <button id="btn-free-gpu" onclick="freeGPU()" class="btn btn-outline btn-sm" title="Liberar VRAM ahora">
+        🧹 Liberar
+      </button>
+    </div>
+  </div>
+</div>
+
 <div class="grid-4 mb-3">
   <div class="stat-card">
     <div class="stat-label">🪙 Créditos disponibles</div>
-    <div class="stat-value text-accent">{{ current_user.credits }}</div>
+    <div class="stat-value text-accent">{% if current_user.is_admin() %}∞{% else %}{{ current_user.credits }}{% endif %}</div>
+    <div class="text-xs text-muted mb-1">1 crédito = 1 acción de IA</div>
+    {% if not current_user.is_admin() %}
     <div><a href="{{ url_for('payments.plans') }}" class="text-sm" style="color:var(--accent2);">Comprar más →</a></div>
+    {% else %}
+    <div class="text-xs" style="color:var(--success);">Cuenta de administrador</div>
+    {% endif %}
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">💾 Almacenamiento usado</div>
+    <div class="stat-value" style="font-size:1.5rem;">{{ storage_used_mb }} MB</div>
+    <div style="margin:6px 0 4px;">
+      <div class="progress"><div class="progress-bar" style="width:{{ storage_pct }}%;background:{% if storage_pct > 80 %}var(--danger){% elif storage_pct > 60 %}var(--warning){% else %}var(--accent){% endif %};"></div></div>
+    </div>
+    <div class="text-xs text-muted">{{ storage_used_mb }} MB de {{ storage_limit_mb }} MB ({{ storage_pct }}%)</div>
   </div>
   <div class="stat-card">
     <div class="stat-label">📋 Trabajos totales</div>
     <div class="stat-value">{{ current_user.jobs.count() }}</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-label">✅ Completados</div>
-    <div class="stat-value text-success">{{ current_user.jobs.filter_by(status='completed').count() }}</div>
+    <div class="text-xs text-muted">✅ {{ current_user.jobs.filter_by(status='completed').count() }} completados</div>
   </div>
   <div class="stat-card">
     <div class="stat-label">📅 Miembro desde</div>
     <div class="stat-value" style="font-size:1.2rem;">{{ current_user.created_at | fecha }}</div>
+    <div class="text-xs text-muted mt-1">Plan: <strong style="color:var(--accent2);">{{ current_user.plan.name if current_user.plan else 'Gratuito' }}</strong></div>
   </div>
+</div>
+
+<!-- Tabla de qué consume cada crédito -->
+<div class="card mb-3" style="background:rgba(99,102,241,0.05);border-color:rgba(99,102,241,0.2);">
+  <div class="flex justify-between items-center mb-2">
+    <div class="card-title" style="margin-bottom:0;">💡 ¿Qué puedo hacer con mis créditos?</div>
+    <a href="{{ url_for('payments.plans') }}" class="btn btn-primary btn-sm">Recargar créditos</a>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;">
+    <div style="background:var(--bg2);border-radius:8px;padding:12px;">
+      <div style="font-size:1.4rem;">♈</div>
+      <div class="font-bold text-sm">Horóscopo completo</div>
+      <div class="text-xs text-muted">12 signos + video + narración</div>
+      <div class="text-xs mt-1" style="color:var(--warning);font-weight:700;">20 créditos</div>
+    </div>
+    <div style="background:var(--bg2);border-radius:8px;padding:12px;">
+      <div style="font-size:1.4rem;">💪</div>
+      <div class="font-bold text-sm">Video motivacional</div>
+      <div class="text-xs text-muted">Frases + voz IA + video MP4</div>
+      <div class="text-xs mt-1" style="color:var(--warning);font-weight:700;">15 créditos</div>
+    </div>
+    <div style="background:var(--bg2);border-radius:8px;padding:12px;">
+      <div style="font-size:1.4rem;">📰</div>
+      <div class="font-bold text-sm">Noticias RD</div>
+      <div class="text-xs text-muted">Video de noticias dominicanas</div>
+      <div class="text-xs mt-1" style="color:var(--warning);font-weight:700;">10 créditos</div>
+    </div>
+    <div style="background:var(--bg2);border-radius:8px;padding:12px;">
+      <div style="font-size:1.4rem;">📝</div>
+      <div class="font-bold text-sm">Solo guión</div>
+      <div class="text-xs text-muted">Texto e ideas con IA</div>
+      <div class="text-xs mt-1" style="color:var(--success);font-weight:700;">5 créditos</div>
+    </div>
+    <div style="background:var(--bg2);border-radius:8px;padding:12px;">
+      <div style="font-size:1.4rem;">🎙️</div>
+      <div class="font-bold text-sm">Narración IA</div>
+      <div class="text-xs text-muted">Voz profesional en español</div>
+      <div class="text-xs mt-1" style="color:var(--success);font-weight:700;">5 créditos</div>
+    </div>
+    <div style="background:var(--bg2);border-radius:8px;padding:12px;">
+      <div style="font-size:1.4rem;">▶️</div>
+      <div class="font-bold text-sm">Publicar YouTube</div>
+      <div class="text-xs text-muted">Sube el video a tu canal</div>
+      <div class="text-xs mt-1" style="color:var(--success);font-weight:700;">5 créditos</div>
+    </div>
+  </div>
+  {% if storage_pct > 80 %}
+  <div class="alert alert-danger mt-2" style="margin-bottom:0;">
+    ⚠️ <strong>Almacenamiento casi lleno ({{ storage_pct }}%).</strong>
+    Borra videos antiguos o contacta soporte para ampliar tu espacio.
+  </div>
+  {% endif %}
 </div>
 
 {% if not current_user.email_verified %}
@@ -117,4 +204,45 @@
   <p class="text-muted text-sm">Sin transacciones aún.</p>
   {% endif %}
 </div>
+
+{% block extra_js %}
+<script>
+const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+function updateGPU() {
+  fetch('/api/gpu/status')
+    .then(r => r.json())
+    .then(d => {
+      const fill = document.getElementById('gpu-bar-fill');
+      const detail = document.getElementById('gpu-detail');
+      const pct = document.getElementById('gpu-pct');
+      const pctVal = d.vram_pct || 0;
+      fill.style.width = pctVal + '%';
+      fill.style.background = pctVal > 80 ? 'var(--danger)' : pctVal > 60 ? 'var(--warning)' : 'var(--accent)';
+      const used = Math.round(d.vram_used_mb / 1024 * 10) / 10;
+      const free = Math.round(d.vram_free_mb / 1024 * 10) / 10;
+      detail.textContent = d.model_loaded
+        ? 'Modelo activo: ' + d.model_name + ' — ' + used + 'GB usados'
+        : 'Sin modelo cargado — ' + used + 'GB usados / ' + free + 'GB libres';
+      pct.textContent = d.vram_used_mb + ' MB / ' + d.vram_total_mb + ' MB (' + pctVal + '%)';
+    })
+    .catch(() => { document.getElementById('gpu-detail').textContent = 'GPU no detectada'; });
+}
+
+function freeGPU() {
+  const btn = document.getElementById('btn-free-gpu');
+  btn.disabled = true; btn.textContent = '⏳ Liberando...';
+  fetch('/api/gpu/free', { method: 'POST', headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' } })
+    .then(r => r.json())
+    .then(() => {
+      btn.textContent = '✅ Liberado';
+      setTimeout(() => { btn.disabled = false; btn.textContent = '🧹 Liberar'; updateGPU(); }, 3000);
+      updateGPU();
+    });
+}
+
+updateGPU();
+setInterval(updateGPU, 15000);
+</script>
+{% endblock %}
 {% endblock %}

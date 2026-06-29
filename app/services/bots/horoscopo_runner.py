@@ -38,36 +38,26 @@ def _set_progress(db, job, pct: int, msg: str):
     db.session.commit()
 
 
-def _run_step(script_name: str, bot_dir: Path, params: dict) -> tuple[bool, str]:
+def _run_step(script_name: str, bot_dir: Path, params: dict, update_fn=None) -> tuple[bool, str]:
     """
-    Ejecuta un paso del pipeline.
+    Ejecuta un paso del pipeline con auto-corrección en tiempo real.
     Retorna (exito, salida/error).
     """
-    script = bot_dir / script_name
-    if not script.exists():
-        return False, f'Script no encontrado: {script}'
+    from app.services.auto_fix import ejecutar_con_autofix
 
-    cmd = [sys.executable, str(script)]
-
-    # Argumentos específicos por script
+    cmd_extra = []
     if script_name == '1_generar_textos.py':
         fecha = params.get('fecha', 'hoy')
         if fecha and fecha != 'hoy':
-            cmd.append(fecha)
+            cmd_extra.append(fecha)
 
-    result = subprocess.run(
-        cmd,
-        capture_output=True,
-        text=True,
+    return ejecutar_con_autofix(
+        script_name=script_name,
+        bot_dir=bot_dir,
+        cmd_extra=cmd_extra,
         timeout=3600,
-        cwd=str(bot_dir),
-        encoding='utf-8',
-        errors='replace',
+        update_fn=update_fn,
     )
-
-    if result.returncode == 0:
-        return True, result.stdout[-2000:]
-    return False, result.stderr[-2000:] or result.stdout[-1000:]
 
 
 def _execute_pipeline(app, job_id: int, params: dict):
@@ -100,18 +90,22 @@ def _execute_pipeline(app, job_id: int, params: dict):
 
             _set_progress(db, job, prog_start, msg)
 
-            success, output = _run_step(script_name, bot_dir, params)
+            # update_fn reporta mensajes de auto-fix en tiempo real al usuario
+            def update_fn(mensaje, _job=job, _db=db, _pct=prog_start):
+                _set_progress(_db, _job, _pct, f'🔧 {mensaje}')
+
+            success, output = _run_step(script_name, bot_dir, params, update_fn=update_fn)
             output_log.append(f'[{script_name}]\n{output[:500]}')
 
             if not success:
                 job.status = 'failed'
                 job.error_message = f'Error en {script_name}:\n{output[:1500]}'
                 job.completed_at = datetime.now(timezone.utc)
-                _set_progress(db, job, prog_start, f'Error en paso: {script_name}')
+                _set_progress(db, job, prog_start, f'❌ No se pudo corregir el error en: {script_name}')
                 _notify(db, job.user_id, job_id, 'error', script_name)
                 return
 
-            _set_progress(db, job, prog_end, f'Paso completado: {script_name}')
+            _set_progress(db, job, prog_end, f'✅ Completado: {script_name}')
 
         # Todo OK
         job.status = 'completed'

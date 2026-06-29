@@ -1,0 +1,260 @@
+{% extends 'base.html' %}
+{% block title %}Configurar Horóscopo Bot — {{ app_name }}{% endblock %}
+{% block page_title %}♈ Configurar Bot de Horóscopo{% endblock %}
+{% block content %}
+
+<div class="grid-2 mb-3" style="grid-template-columns: 1fr 360px; gap: 20px; align-items: start;">
+
+  <!-- ─── Formulario principal ─────────────────────────────────────── -->
+  <form method="POST" action="{{ url_for('dashboard.bot_horoscopo') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <!-- Canal -->
+    <div class="card mb-2">
+      <div class="card-title">📺 Datos del Canal</div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Nombre del canal</label>
+          <input name="canal_nombre" class="form-control" value="{{ cfg.get('canal_nombre','') }}" placeholder="Ej: Horóscopo Diario" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nombre del presentador / personaje</label>
+          <input name="persona_nombre" class="form-control" value="{{ cfg.get('persona_nombre','') }}" placeholder="Ej: Maestra Lumira">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Estilo del personaje</label>
+        <textarea name="persona_estilo" class="form-control" rows="2" placeholder="Describe la personalidad del narrador...">{{ cfg.get('persona_estilo','') }}</textarea>
+      </div>
+    </div>
+
+    <!-- Voz -->
+    <div class="card mb-2">
+      <div class="card-title">🎙️ Voz del Narrador</div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Voz principal</label>
+          <select name="voz_es" class="form-control">
+            {% for v in voces %}
+            <option value="{{ v }}" {% if v == cfg.get('voz_es') %}selected{% endif %}>{{ v }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Velocidad de voz</label>
+          <select name="velocidad" class="form-control">
+            <option value="-10%" {% if cfg.get('velocidad')=='-10%' %}selected{% endif %}>Muy lenta (-10%)</option>
+            <option value="-6%"  {% if cfg.get('velocidad','-6%')=='-6%' %}selected{% endif %}>Lenta (-6%)</option>
+            <option value="0%"   {% if cfg.get('velocidad')=='0%' %}selected{% endif %}>Normal (0%)</option>
+            <option value="+5%"  {% if cfg.get('velocidad')=='+5%' %}selected{% endif %}>Rápida (+5%)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Publicación -->
+    <div class="card mb-2">
+      <div class="card-title">📅 Horario de Publicación</div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Hora de inicio diaria</label>
+          <input type="time" name="hora_inicio" class="form-control" value="{{ auto_cfg.get('hora_inicio','07:00') }}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Videos por día</label>
+          <select name="videos_por_dia" class="form-control">
+            <option value="1"  {% if auto_cfg.get('videos_por_dia')==1 %}selected{% endif %}>1 video/día</option>
+            <option value="3"  {% if auto_cfg.get('videos_por_dia')==3 %}selected{% endif %}>3 videos/día</option>
+            <option value="6"  {% if auto_cfg.get('videos_por_dia')==6 %}selected{% endif %}>6 videos/día</option>
+            <option value="12" {% if auto_cfg.get('videos_por_dia',12)==12 %}selected{% endif %}>12 videos/día (todos los signos)</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Días activos</label>
+        <div class="flex gap-2" style="flex-wrap:wrap;">
+          {% for dia, label in [('lun','Lun'),('mar','Mar'),('mie','Mié'),('jue','Jue'),('vie','Vie'),('sab','Sáb'),('dom','Dom')] %}
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;background:var(--bg3);padding:6px 12px;border-radius:8px;">
+            <input type="checkbox" name="dias" value="{{ dia }}" {% if dia in auto_cfg.get('dias',['lun','mar','mie','jue','vie','sab','dom']) %}checked{% endif %}>
+            {{ label }}
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Hashtags -->
+    <div class="card mb-2">
+      <div class="card-title">🏷️ Hashtags para YouTube</div>
+      <div class="form-group">
+        <input name="hashtags" class="form-control" value="{{ cfg.get('hashtags_base',[])|join(' ') }}" placeholder="#Horoscopo #Astrologia #Signos">
+        <div class="form-hint">Separados por espacios. Se agregan automáticamente a cada video.</div>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary w-full">💾 Guardar configuración</button>
+  </form>
+
+  <!-- ─── Panel derecho ──────────────────────────────────────────── -->
+  <div>
+
+    <!-- CUENTAS -->
+    <div class="card mb-2" style="border-color:{% if sesion_activa %}var(--success){% else %}var(--warning){% endif %};">
+      <div class="card-title">🔐 Cuentas del Bot</div>
+
+      {% if sesion_activa %}
+      <div class="alert alert-success mb-2">✅ <strong>YouTube conectado</strong> — el bot puede subir videos.</div>
+      {% else %}
+      <div class="alert alert-warning mb-2">⚠️ <strong>YouTube sin sesión</strong> — abre Chrome e inicia sesión para activar la subida automática.</div>
+      {% endif %}
+
+      <!-- Email YouTube -->
+      <div class="form-group">
+        <label class="form-label">📧 Email de Google (canal YouTube)</label>
+        <input id="yt_email" class="form-control" type="email"
+               value="{{ yt_email }}" placeholder="ejemplo@gmail.com">
+      </div>
+
+      <!-- Nombre del canal YouTube -->
+      <div class="form-group">
+        <label class="form-label">📺 Nombre del canal YouTube</label>
+        <input id="yt_canal" class="form-control" type="text"
+               value="{{ yt_canal }}" placeholder="Ej: Horóscopo Diario con Lumira">
+      </div>
+
+      <!-- Facebook -->
+      <div class="form-group">
+        <label class="form-label">📘 URL exacta de la página de Facebook</label>
+        <input id="fb_url" class="form-control" type="url"
+               value="{{ fb_url }}" placeholder="https://www.facebook.com/TuPaginaAqui">
+        <div class="form-hint">El bot publica SOLO en esta URL, nunca en otra página.</div>
+      </div>
+
+      <!-- Botón guardar datos -->
+      <button onclick="guardarCuentas()" class="btn btn-success w-full mb-2">
+        💾 Guardar datos de cuentas
+      </button>
+
+      <hr class="divider">
+
+      <!-- Botón abrir Chrome -->
+      <div class="text-xs text-muted mb-1" style="text-align:center;">Para conectar YouTube, abre Chrome e inicia sesión:</div>
+      <button onclick="abrirLoginYoutube()" class="btn btn-primary w-full mb-1">
+        🔓 Abrir Chrome → iniciar sesión en YouTube
+      </button>
+      <div class="text-xs text-muted" style="text-align:center;">
+        Cierra Chrome cuando veas YouTube Studio cargado.
+      </div>
+
+      <hr class="divider">
+
+      <!-- Activar/pausar -->
+      <div class="flex justify-between items-center">
+        <div>
+          <div class="font-bold text-sm">Publicación automática</div>
+          <div class="text-xs text-muted">El bot publica solo todos los días</div>
+        </div>
+        <form method="POST" action="{{ url_for('dashboard.bot_horoscopo_toggle') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn {% if auto_activo %}btn-danger{% else %}btn-success{% endif %} btn-sm">
+            {% if auto_activo %}⏸ Pausar{% else %}▶️ Activar{% endif %}
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Estadísticas rápidas -->
+    <div class="card mb-2">
+      <div class="card-title">📊 Estado actual</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div class="flex justify-between">
+          <span class="text-sm text-muted">Videos generados hoy</span>
+          <strong>{{ stats.videos_hoy }}</strong>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-sm text-muted">Videos en cola</span>
+          <strong>{{ stats.en_cola }}</strong>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-sm text-muted">Total videos</span>
+          <strong>{{ stats.total_videos }}</strong>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-sm text-muted">Espacio en disco</span>
+          <strong>{{ stats.size_mb }} MB</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Generar ahora -->
+    <div class="card">
+      <div class="card-title">⚡ Generar ahora</div>
+      <p class="text-sm text-muted mb-2">Crea el horóscopo de hoy manualmente sin esperar el horario automático.</p>
+      <form method="POST" action="{{ url_for('dashboard.bot_horoscopo_run') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-group">
+          <label class="form-label">Fecha</label>
+          <input type="date" name="fecha" class="form-control" value="{{ hoy }}">
+        </div>
+        <div class="form-group">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="checkbox" name="subir_youtube" value="1" {% if sesion_activa %}checked{% endif %}>
+            <span class="text-sm">Subir a YouTube al terminar</span>
+          </label>
+        </div>
+        <button type="submit" class="btn btn-success w-full"
+          {% if current_user.credits < 20 %}disabled title="Necesitas 20 créditos"{% endif %}>
+          🚀 Generar horóscopo (20 créditos)
+        </button>
+      </form>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const _csrf = document.querySelector('meta[name="csrf-token"]').content;
+
+function guardarCuentas() {
+  const btn = event.target;
+  btn.disabled = true;
+  btn.textContent = '⏳ Guardando...';
+  fetch('{{ url_for("dashboard.bot_horoscopo_save_fb") }}', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': _csrf },
+    body: JSON.stringify({
+      fb_url:   document.getElementById('fb_url').value.trim(),
+      yt_email: document.getElementById('yt_email').value.trim(),
+      yt_canal: document.getElementById('yt_canal').value.trim(),
+    })
+  })
+  .then(r => r.json())
+  .then(d => {
+    btn.disabled = false;
+    btn.textContent = d.ok ? '✅ Datos guardados' : '❌ Error: ' + d.error;
+    setTimeout(() => btn.textContent = '💾 Guardar datos de cuentas', 2500);
+  });
+}
+
+function abrirLoginYoutube() {
+  const email = document.getElementById('yt_email').value;
+  fetch('{{ url_for("dashboard.bot_horoscopo_login") }}', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+    },
+    body: JSON.stringify({ email: email })
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.ok) {
+      alert('Chrome se abrió. Inicia sesión con tu cuenta de Google y cierra Chrome cuando veas YouTube Studio cargado.');
+      setTimeout(() => location.reload(), 3000);
+    } else {
+      alert('Error: ' + d.error);
+    }
+  });
+}
+</script>
+{% endblock %}

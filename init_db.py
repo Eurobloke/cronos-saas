@@ -57,20 +57,20 @@ def init():
         else:
             print(f'ℹ️  Admin ya existe: {admin_email}')
 
-        # Planes
+        # Planes (precios competitivos — por debajo del mercado)
         planes = [
-            Plan(name='Starter', slug='starter', description='Para creadores individuales',
-                 price_monthly=9.99, price_annual=89.99, credits_monthly=100,
+            Plan(name='Starter', slug='starter', description='Para creadores que empiezan',
+                 price_monthly=4.99, price_annual=39.99, credits_monthly=150,
                  sort_order=1, is_active=True,
-                 features='["100 créditos/mes","Acceso a todos los servicios","Soporte por email","1 canal de YouTube"]'),
+                 features='["150 créditos/mes","2 GB de almacenamiento","Todos los bots incluidos","50 peticiones de IA/día","1 canal de YouTube","Soporte por email"]'),
             Plan(name='Creator', slug='creator', description='Para creadores profesionales',
-                 price_monthly=29.99, price_annual=269.99, credits_monthly=350,
+                 price_monthly=12.99, price_annual=99.99, credits_monthly=600,
                  sort_order=2, is_active=True, is_popular=True,
-                 features='["350 créditos/mes","Todos los servicios + prioridad","Soporte prioritario","Hasta 5 canales","Estadísticas avanzadas"]'),
+                 features='["600 créditos/mes","10 GB de almacenamiento","Todos los bots + prioridad","200 peticiones de IA/día","Hasta 5 canales","Soporte prioritario","Estadísticas avanzadas"]'),
             Plan(name='Agency', slug='agency', description='Para agencias y equipos',
-                 price_monthly=79.99, price_annual=719.99, credits_monthly=1200,
+                 price_monthly=29.99, price_annual=239.99, credits_monthly=2500,
                  sort_order=3, is_active=True,
-                 features='["1200 créditos/mes","Canales ilimitados","Soporte 24/7 dedicado","API de acceso","Panel de equipo","Reportes personalizados"]'),
+                 features='["2500 créditos/mes","50 GB de almacenamiento","Canales ilimitados","Peticiones de IA ilimitadas","Soporte 24/7 dedicado","API de acceso","Reportes personalizados"]'),
         ]
         for plan in planes:
             if not Plan.query.filter_by(slug=plan.slug).first():

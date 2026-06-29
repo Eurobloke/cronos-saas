@@ -40,6 +40,60 @@ def _get_or_create_niche(user_id: int) -> NicheProfile:
     return profile
 
 
+# Límites recomendados por plan (peticiones al asistente IA por día)
+CHAT_DAILY_LIMITS = {
+    'free':    15,    # Sin plan: 15 peticiones/día
+    'starter': 50,    # Plan Starter: 50 peticiones/día
+    'creator': 200,   # Plan Creator: 200 peticiones/día
+    'agency':  9999,  # Plan Agency: ilimitado
+    'admin':   9999,  # Admin: sin límite
+}
+
+# Límites de almacenamiento por plan (MB)
+STORAGE_LIMITS_MB = {
+    'free':    500,     # 500 MB gratis
+    'starter': 2048,    # 2 GB
+    'creator': 10240,   # 10 GB
+    'agency':  51200,   # 50 GB
+    'admin':   999999,  # Sin límite
+}
+
+def _get_plan_slug(user) -> str:
+    if user.is_admin():
+        return 'admin'
+    plan = user.plan
+    if not plan:
+        return 'free'
+    return plan.slug if hasattr(plan, 'slug') else 'free'
+
+
+def _check_chat_limit(user) -> tuple[bool, str]:
+    """Retorna (permitido, mensaje). Bloquea si el usuario superó su límite diario."""
+    from datetime import date as dt_date
+    from app.models.niche_profile import Conversation
+    plan_slug = _get_plan_slug(user)
+    limit = CHAT_DAILY_LIMITS.get(plan_slug, 20)
+    today_start = datetime.combine(dt_date.today(), datetime.min.time()).replace(tzinfo=timezone.utc) if hasattr(datetime, 'combine') else None
+
+    from datetime import datetime as _dt, date as _d, timezone as _tz, timedelta
+    inicio_hoy = _dt.combine(_d.today(), _dt.min.time()).replace(tzinfo=_tz.utc)
+    count = Conversation.query.filter(
+        Conversation.user_id == user.id,
+        Conversation.role == 'user',
+        Conversation.created_at >= inicio_hoy,
+    ).count()
+
+    if count >= limit:
+        return False, (
+            f'⚠️ Alcanzaste el límite de {limit} peticiones diarias de tu plan "{plan_slug}". '
+            f'Vuelve mañana o actualiza tu plan para más capacidad.'
+        )
+    remaining = limit - count
+    if remaining <= 5:
+        return True, f'💡 Te quedan {remaining} peticiones de IA hoy (límite: {limit}).'
+    return True, ''
+
+
 # ─── Chat con el orquestador ─────────────────────────────────────────────────
 
 @api_bp.route('/chat', methods=['POST'])
@@ -49,6 +103,11 @@ def chat():
     user_message = (data.get('message') or '').strip()
     if not user_message:
         return jsonify({'error': 'Mensaje vacío'}), 400
+
+    # Verificar límite diario de peticiones según plan
+    allowed, limit_msg = _check_chat_limit(current_user)
+    if not allowed:
+        return jsonify({'type': 'message', 'content': limit_msg, 'rate_limited': True})
 
     profile = _get_or_create_niche(current_user.id)
     niche_ctx = profile.to_context_string()
@@ -71,10 +130,32 @@ def chat():
 
     # ── Si el orquestador quiere ejecutar un bot ────────────────────────────
     if result.get('type') == 'action':
+        from flask import current_app
+        from pathlib import Path
+        from app.services.bot_memory import build_awareness_message
+
         bot_name = result.get('bot', '').upper()
         params = result.get('params', {})
         ai_message = result.get('message', f'Ejecutando {bot_name}...')
 
+        # Si el usuario ya confirmó explícitamente con "si", "sí", "confirmar", "dale", etc.
+        CONFIRMACIONES = {'si', 'sí', 'confirmar', 'dale', 'ok', 'hazlo', 'procede',
+                          'adelante', 'ejecuta', 'ejecutalo', 'confirm', 'yes', 'continua'}
+        usuario_confirmo = any(p in user_message.lower() for p in CONFIRMACIONES)
+
+        bots_dir = Path(current_app.config.get('BOTS_DIR', ''))
+        awareness = build_awareness_message(current_user.id, bot_name, params, bots_dir)
+
+        # Si necesita confirmación y el usuario NO confirmó todavía → preguntar
+        if awareness['needs_confirmation'] and not usuario_confirmo:
+            reply = awareness['message']
+            ai_conv = Conversation(user_id=current_user.id, role='assistant', content=reply)
+            db.session.add(ai_conv)
+            db.session.commit()
+            return jsonify({'type': 'message', 'content': reply, 'awaiting_confirmation': True,
+                            'pending_bot': bot_name, 'pending_params': params})
+
+        # Proceder con la ejecución
         job_id, error = _launch_bot(bot_name, params)
         if error:
             reply = f"No pude iniciar el bot: {error}"
@@ -83,7 +164,6 @@ def chat():
             db.session.commit()
             return jsonify({'type': 'message', 'content': reply})
 
-        # Guardar respuesta de la IA con referencia al job
         ai_conv = Conversation(user_id=current_user.id, role='assistant',
                                content=ai_message, job_id=job_id)
         db.session.add(ai_conv)
@@ -92,6 +172,9 @@ def chat():
 
     # ── Respuesta de texto normal ────────────────────────────────────────────
     reply = result.get('content', 'No entendí la solicitud.')
+    # Adjuntar aviso de límite si quedan pocas peticiones
+    if limit_msg:
+        reply = reply + f'\n\n{limit_msg}'
     ai_conv = Conversation(user_id=current_user.id, role='assistant', content=reply)
     db.session.add(ai_conv)
     db.session.commit()
@@ -322,3 +405,60 @@ def run_chain():
 def get_chain_blocks():
     """Lista de bloques disponibles con su costo."""
     return jsonify(AVAILABLE_BLOCKS)
+
+
+# ─── GPU / Ollama ─────────────────────────────────────────────────────────────
+
+@api_bp.route('/gpu/status')
+@login_required
+def gpu_status():
+    """Retorna el uso actual de VRAM y si Ollama tiene algún modelo cargado."""
+    import subprocess, re
+    result = {'vram_used_mb': 0, 'vram_total_mb': 8192, 'model_loaded': False, 'model_name': None}
+    try:
+        out = subprocess.check_output(
+            ['nvidia-smi', '--query-gpu=memory.used,memory.total', '--format=csv,noheader'],
+            timeout=5, text=True
+        ).strip()
+        parts = [p.strip().replace(' MiB', '') for p in out.split(',')]
+        result['vram_used_mb'] = int(parts[0])
+        result['vram_total_mb'] = int(parts[1])
+    except Exception:
+        pass
+
+    # Verificar si Ollama tiene modelos activos
+    try:
+        import requests as req
+        ps = req.get('http://localhost:11434/api/ps', timeout=3).json()
+        models = ps.get('models', [])
+        if models:
+            result['model_loaded'] = True
+            result['model_name'] = models[0].get('name', '')
+    except Exception:
+        pass
+
+    result['vram_free_mb'] = result['vram_total_mb'] - result['vram_used_mb']
+    result['vram_pct'] = int((result['vram_used_mb'] / result['vram_total_mb']) * 100)
+    return jsonify(result)
+
+
+@api_bp.route('/gpu/free', methods=['POST'])
+@login_required
+def gpu_free():
+    """Libera todos los modelos de Ollama de la VRAM inmediatamente."""
+    import requests as req
+    from app.services.orchestrator import OLLAMA_MODEL, OLLAMA_URL
+
+    freed = []
+    models_to_free = [OLLAMA_MODEL, 'qwen2.5:32b', 'qwen2.5:14b', 'llama3.1:8b']
+
+    for model in models_to_free:
+        try:
+            req.post(OLLAMA_URL.replace('/api/chat', '/api/generate'),
+                     json={'model': model, 'keep_alive': 0},
+                     timeout=5)
+            freed.append(model)
+        except Exception:
+            pass
+
+    return jsonify({'ok': True, 'freed': freed})

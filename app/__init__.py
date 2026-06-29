@@ -88,4 +88,27 @@ def create_app(config_name: str = None) -> Flask:
             'unread_notifications': unread,
         }
 
+    # Al arrancar: marcar jobs huérfanos como fallidos
+    with app.app_context():
+        try:
+            from datetime import datetime, timezone
+            from app.models.job import Job
+            stuck = Job.query.filter_by(status='running').all()
+            for j in stuck:
+                j.status = 'failed'
+                j.error_message = 'El servidor se reinició mientras el trabajo estaba en progreso. Vuelve a ejecutarlo.'
+                j.completed_at = datetime.now(timezone.utc)
+            if stuck:
+                db.session.commit()
+        except Exception:
+            pass
+
+    # Scheduler automático de bots
+    if not app.config.get('TESTING') and os.environ.get('WERKZEUG_RUN_MAIN') != 'false':
+        try:
+            from app.services.scheduler import start_scheduler
+            start_scheduler(app)
+        except Exception as e:
+            app.logger.warning(f'Scheduler no iniciado: {e}')
+
     return app
