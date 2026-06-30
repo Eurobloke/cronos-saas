@@ -1,18 +1,27 @@
 {% extends 'base.html' %}
-{% block title %}Mis trabajos — {{ app_name }}{% endblock %}
-{% block page_title %}Mis trabajos{% endblock %}
+{% block title %}{% if current_user.is_admin() %}Todos los trabajos{% else %}Mis trabajos{% endif %} — {{ app_name }}{% endblock %}
+{% block page_title %}{% if current_user.is_admin() %}👑 Todos los trabajos (admin){% else %}Mis trabajos{% endif %}{% endblock %}
 {% block content %}
 
 <div class="card">
   <div class="table-wrap">
     <table>
       <thead>
-        <tr><th>#</th><th>Servicio</th><th>Estado</th><th>Créditos</th><th>Duración</th><th>Fecha</th><th></th></tr>
+        <tr>
+          <th>#</th>
+          {% if current_user.is_admin() %}<th>Usuario</th>{% endif %}
+          <th>Servicio</th><th>Estado</th><th>Créditos</th><th>Duración</th><th>Fecha</th><th></th>
+        </tr>
       </thead>
       <tbody>
         {% for job in jobs.items %}
         <tr>
           <td class="text-muted text-xs">{{ job.id }}</td>
+          {% if current_user.is_admin() %}
+          <td class="text-xs">
+            <span title="{{ job.user.email if job.user else '' }}">{{ job.user.username if job.user else '?' }}</span>
+          </td>
+          {% endif %}
           <td>{{ job.service.name if job.service else '—' }}</td>
           <td>
             {% if job.status == 'completed' %}<span class="badge badge-success">✅ Completado</span>
@@ -28,10 +37,19 @@
             {% if job.duration_seconds() %}{{ "%.0f"|format(job.duration_seconds()) }}s{% else %}—{% endif %}
           </td>
           <td class="text-muted text-xs">{{ job.created_at | fecha }}</td>
-          <td><a href="{{ url_for('dashboard.job_detail', job_id=job.id) }}" class="btn btn-outline btn-sm">Ver</a></td>
+          <td style="display:flex;gap:6px;align-items:center;">
+            <a href="{{ url_for('dashboard.job_detail', job_id=job.id) }}" class="btn btn-outline btn-sm">Ver</a>
+            {% if job.status in ('queued','running') %}
+            <form method="POST" action="{{ url_for('dashboard.job_cancel', job_id=job.id) }}"
+                  onsubmit="return confirm('¿Cancelar este trabajo?')" style="margin:0">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-sm" style="background:#ef4444;color:#fff;border:none;">✕ Cancelar</button>
+            </form>
+            {% endif %}
+          </td>
         </tr>
         {% else %}
-        <tr><td colspan="7" class="text-muted text-sm" style="text-align:center;padding:32px;">No tienes trabajos todavía.</td></tr>
+        <tr><td colspan="{{ 8 if current_user.is_admin() else 7 }}" class="text-muted text-sm" style="text-align:center;padding:32px;">No hay trabajos todavía.</td></tr>
         {% endfor %}
       </tbody>
     </table>

@@ -28,6 +28,10 @@ class Config:
     PAYPAL_MODE = os.environ.get('PAYPAL_MODE', 'sandbox')
     PAYPAL_WEBHOOK_ID = os.environ.get('PAYPAL_WEBHOOK_ID', '')
 
+    # dLocal Go — pagos internacionales con métodos locales
+    DLOCAL_API_KEY    = os.environ.get('DLOCAL_API_KEY', '')
+    DLOCAL_SECRET_KEY = os.environ.get('DLOCAL_SECRET_KEY', '')
+
     # App
     APP_NAME = os.environ.get('APP_NAME', 'Cronos AI')
     APP_URL = os.environ.get('APP_URL', 'http://localhost:5000')

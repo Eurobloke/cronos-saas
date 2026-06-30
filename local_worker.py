@@ -78,6 +78,12 @@ def _ejecutar_job(app, job_id, service_slug, params):
     elif 'motivacion' in service_slug:
         from app.services.bots.motivacion_runner import run_pipeline_async
         run_pipeline_async(app, job_id, params)
+    elif 'noticias' in service_slug:
+        from app.services.bots.noticias_runner import run_pipeline_async
+        run_pipeline_async(app, job_id, params)
+    elif 'cristiano' in service_slug:
+        from app.services.bots.cristiano_runner import run_pipeline_async
+        run_pipeline_async(app, job_id, params)
     else:
         from app.services.bot_runner import run_job_async
         run_job_async(app, job_id)

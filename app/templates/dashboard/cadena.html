@@ -349,7 +349,7 @@ async function runChain() {
   if (chain.length === 0 || isRunning) return;
 
   const total = chain.reduce((s,c) => s + (c.credits||0), 0);
-  const avail = {{ current_user.credits }};
+  const avail = {{ 'Infinity' if current_user.is_admin() else current_user.credits }};
   if (total > avail) {
     alert(`No tienes suficientes créditos. Necesitas ${total}, tienes ${avail}.`);
     return;

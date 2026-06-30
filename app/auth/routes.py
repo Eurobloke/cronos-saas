@@ -77,6 +77,13 @@ def register():
         credit_service.apply_welcome_credits(user)
         db.session.commit()
 
+        # Crear workspace en disco para cada bot
+        try:
+            from app.services.workspace_service import create_user_workspaces
+            create_user_workspaces(user.id)
+        except Exception:
+            pass
+
         token = token_service.generate_token(user.email, salt='email-verify')
         email_service.send_verify_email(user, token)
         email_service.send_welcome(user)

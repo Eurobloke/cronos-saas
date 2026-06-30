@@ -367,7 +367,7 @@ def run_chain():
         return jsonify({'error': 'Máximo 15 pasos por cadena.'}), 400
 
     total_credits = calc_total_credits(steps)
-    if current_user.credits < total_credits:
+    if not current_user.is_admin() and current_user.credits < total_credits:
         return jsonify({'error': f'Créditos insuficientes. Necesitas {total_credits}, tienes {current_user.credits}.'}), 400
 
     # Usar servicio genérico "video_completo" para el tracking del job

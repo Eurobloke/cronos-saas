@@ -49,8 +49,17 @@
   </div>
   {% endif %}
 
-  <div class="mt-2">
+  <div class="mt-2" style="display:flex;gap:10px;align-items:center;">
     <a href="{{ url_for('dashboard.jobs') }}" class="btn btn-outline btn-sm">← Volver</a>
+    {% if job.status in ('queued','running') %}
+    <form method="POST" action="{{ url_for('dashboard.job_cancel', job_id=job.id) }}"
+          onsubmit="return confirm('¿Cancelar este trabajo?')" style="margin:0">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn btn-sm" style="background:#ef4444;color:#fff;border:none;padding:8px 18px;">
+        ✕ Cancelar trabajo
+      </button>
+    </form>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

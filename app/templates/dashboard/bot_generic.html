@@ -3,11 +3,31 @@
 {% block page_title %}{{ bot.icon }} Configurar {{ bot.name }}{% endblock %}
 {% block content %}
 
+<!-- ─── Tabs de cuentas / slots ──────────────────────────────────────────── -->
+{% if max_slots > 1 %}
+<div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;align-items:center;">
+  <span class="text-sm text-muted" style="margin-right:4px;">📂 Cuenta:</span>
+  {% for si in slots_info %}
+  <a href="{{ url_for('dashboard.bot_config', slug=bot.slug, slot=si.slot) }}"
+     style="display:flex;align-items:center;gap:5px;padding:6px 14px;border-radius:20px;font-size:0.82rem;font-weight:600;text-decoration:none;border:2px solid {% if si.slot == slot %}var(--primary){% else %}var(--border){% endif %};background:{% if si.slot == slot %}var(--primary){% else %}var(--bg2){% endif %};color:{% if si.slot == slot %}#fff{% else %}var(--text){% endif %};">
+    Cuenta {{ si.slot }}
+    {% if si.yt_cfg %}<span title="YouTube {% if si.yt_ok %}conectado{% else %}guardado (sin sesión Chrome){% endif %}" style="color:{% if si.yt_ok %}#22c55e{% else %}#facc15{% endif %};">▶</span>{% else %}<span title="YouTube no configurado" style="color:#ef4444;">▶</span>{% endif %}
+    {% if si.fb_cfg %}<span title="Facebook {% if si.fb_ok %}conectado{% else %}guardado (sin sesión Chrome){% endif %}" style="color:{% if si.fb_ok %}#22c55e{% else %}#facc15{% endif %};">f</span>{% else %}<span title="Facebook no configurado" style="color:#ef4444;">f</span>{% endif %}
+    {% if si.activo %}<span title="Publicación automática activa" style="font-size:0.65rem;background:#22c55e;color:#fff;border-radius:8px;padding:1px 5px;">●</span>{% endif %}
+  </a>
+  {% endfor %}
+  {% if slot == max_slots and not current_user.is_admin() %}
+  <span class="text-xs text-muted">Límite de tu plan ({{ max_slots }} cuentas)</span>
+  {% endif %}
+</div>
+{% endif %}
+
 <div class="grid-2 mb-3" style="grid-template-columns: 1fr 360px; gap: 20px; align-items: start;">
 
   <!-- ─── Formulario principal ─────────────────────────────────────── -->
   <form method="POST" action="{{ url_for('dashboard.bot_config', slug=bot.slug) }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="slot" value="{{ slot }}">
 
     <!-- Canal -->
     <div class="card mb-2">
@@ -102,13 +122,25 @@
   <div>
 
     <!-- CUENTAS -->
-    <div class="card mb-2" style="border-color:{% if sesion_activa %}var(--success){% else %}var(--warning){% endif %};">
-      <div class="card-title">🔐 Cuentas del Bot</div>
+    <div class="card mb-2">
+      <div class="card-title">🔐 Cuenta {{ slot }}{% if max_slots > 1 %} de {{ max_slots }}{% endif %}</div>
 
+      <!-- Estado YouTube -->
       {% if sesion_activa %}
-      <div class="alert alert-success mb-2">✅ <strong>YouTube conectado</strong> — el bot puede subir videos.</div>
+      <div class="alert alert-success mb-1" style="padding:8px 12px;font-size:0.82rem;">✅ <strong>YouTube conectado</strong>{% if yt_email %} — {{ yt_email }}{% endif %}</div>
+      {% elif yt_email %}
+      <div class="alert alert-warning mb-1" style="padding:8px 12px;font-size:0.82rem;">⚠️ <strong>YouTube guardado</strong> — abre Chrome para activar sesión</div>
       {% else %}
-      <div class="alert alert-warning mb-2">⚠️ <strong>YouTube sin sesión</strong> — abre Chrome e inicia sesión.</div>
+      <div class="alert mb-1" style="background:var(--bg3);padding:8px 12px;font-size:0.82rem;">⬜ <strong>YouTube</strong> no configurado</div>
+      {% endif %}
+
+      <!-- Estado Facebook -->
+      {% if fb_sesion_activa %}
+      <div class="alert alert-success mb-2" style="padding:8px 12px;font-size:0.82rem;">✅ <strong>Facebook conectado</strong>{% if fb_url %} — {{ fb_url | truncate(40) }}{% endif %}</div>
+      {% elif fb_url %}
+      <div class="alert alert-warning mb-2" style="padding:8px 12px;font-size:0.82rem;">⚠️ <strong>Facebook guardado</strong> — abre Chrome para activar sesión</div>
+      {% else %}
+      <div class="alert mb-2" style="background:var(--bg3);padding:8px 12px;font-size:0.82rem;">⬜ <strong>Facebook</strong> no configurado</div>
       {% endif %}
 
       <div class="form-group">
@@ -146,6 +178,7 @@
         </div>
         <form method="POST" action="{{ url_for('dashboard.bot_toggle', slug=bot.slug) }}">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="slot" value="{{ slot }}">
           <button type="submit" class="btn {% if auto_activo %}btn-danger{% else %}btn-success{% endif %} btn-sm">
             {% if auto_activo %}⏸ Pausar{% else %}▶️ Activar{% endif %}
           </button>
@@ -178,29 +211,67 @@
       </div>
     </div>
 
+    <!-- Descargar contenido -->
+    <div class="card mb-2">
+      <div class="card-title">📥 Descargar contenido</div>
+      <p class="text-xs text-muted mb-2">Descarga todos los videos e imágenes generados en un ZIP.</p>
+      <a href="{{ url_for('dashboard.bot_download', slug=bot.slug) }}" class="btn btn-outline w-full">
+        ⬇️ Descargar mi contenido (.zip)
+      </a>
+    </div>
+
     <!-- Generar ahora -->
     <div class="card">
       <div class="card-title">⚡ Generar ahora</div>
       <p class="text-sm text-muted mb-2">Crea contenido manualmente sin esperar el horario automático.</p>
       <form method="POST" action="{{ url_for('dashboard.bot_run_now', slug=bot.slug) }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <div class="form-group">
+        <input type="hidden" name="slot" value="{{ slot }}">
+
+        <!-- YouTube -->
+        <div style="background:var(--bg3);border-radius:10px;padding:12px;margin-bottom:10px;">
+          <div class="text-sm font-bold mb-2" style="color:#ff0000;">▶️ YouTube</div>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:6px;">
+            <input type="checkbox" name="yt_shorts" value="1">
+            <span class="text-sm">Publicar como <strong>Short</strong> (vertical ≤60s)</span>
+          </label>
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
             <input type="checkbox" name="subir_youtube" value="1" {% if sesion_activa %}checked{% endif %}>
-            <span class="text-sm">Subir a YouTube al terminar</span>
+            <span class="text-sm">Publicar como <strong>Video largo</strong></span>
           </label>
         </div>
-        <div class="form-group">
+
+        <!-- Facebook -->
+        <div style="background:var(--bg3);border-radius:10px;padding:12px;margin-bottom:12px;">
+          <div class="text-sm font-bold mb-2" style="color:#1877f2;">📘 Facebook</div>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:6px;">
+            <input type="checkbox" name="fb_reels" value="1" {% if fb_url %}checked{% endif %}>
+            <span class="text-sm">Publicar <strong>Reels</strong> (video corto)</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:6px;">
+            <input type="checkbox" name="publicar_facebook" value="1">
+            <span class="text-sm">Publicar <strong>Video largo</strong></span>
+          </label>
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-            <input type="checkbox" name="publicar_facebook" value="1" {% if fb_url %}checked{% endif %}>
-            <span class="text-sm">Publicar en Facebook al terminar</span>
+            <input type="checkbox" name="fb_fotos" value="1">
+            <span class="text-sm">Publicar <strong>Fotos</strong></span>
           </label>
         </div>
+
         <button type="submit" class="btn btn-success w-full"
-          {% if current_user.credits < bot.credit_cost %}disabled title="Necesitas {{ bot.credit_cost }} créditos"{% endif %}>
+          {% if not current_user.is_admin() and current_user.credits < bot.credit_cost %}disabled title="Necesitas {{ bot.credit_cost }} créditos"{% endif %}>
           🚀 Generar contenido ({{ bot.credit_cost }} créditos)
         </button>
       </form>
+    </div>
+
+    <!-- Login Facebook -->
+    <div class="card mt-2">
+      <div class="card-title">📘 Sesión Facebook</div>
+      <div class="text-xs text-muted mb-2">Para publicar en Facebook necesitas iniciar sesión en Chrome.</div>
+      <button onclick="abrirLoginFacebook()" class="btn btn-outline w-full">
+        🔓 Abrir Chrome → iniciar sesión en Facebook
+      </button>
     </div>
 
   </div>
@@ -209,6 +280,7 @@
 <script>
 const _csrf = document.querySelector('meta[name="csrf-token"]').content;
 const BOT_SLUG = '{{ bot.slug }}';
+const BOT_SLOT = {{ slot }};
 
 function guardarCuentas() {
   const btn = event.target;
@@ -217,6 +289,7 @@ function guardarCuentas() {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': _csrf },
     body: JSON.stringify({
+      slot:     BOT_SLOT,
       fb_url:   document.getElementById('fb_url').value.trim(),
       yt_email: document.getElementById('yt_email').value.trim(),
       yt_canal: document.getElementById('yt_canal').value.trim(),
@@ -226,7 +299,7 @@ function guardarCuentas() {
   .then(d => {
     btn.disabled = false;
     btn.textContent = d.ok ? '✅ Datos guardados' : '❌ Error: ' + d.error;
-    setTimeout(() => btn.textContent = '💾 Guardar datos de cuentas', 2500);
+    setTimeout(() => { btn.textContent = '💾 Guardar datos de cuentas'; location.reload(); }, 2000);
   });
 }
 
@@ -236,7 +309,7 @@ function abrirLoginYoutube() {
   fetch(`/dashboard/bots/${BOT_SLUG}/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': _csrf },
-    body: JSON.stringify({ email: document.getElementById('yt_email').value })
+    body: JSON.stringify({ slot: BOT_SLOT, email: document.getElementById('yt_email').value, plataforma: 'youtube' })
   })
   .then(r => r.json())
   .then(d => {
@@ -244,7 +317,28 @@ function abrirLoginYoutube() {
     btn.textContent = '🔓 Abrir Chrome → iniciar sesión en YouTube';
     if (d.ok) {
       alert('Chrome se abrió. Inicia sesión con tu cuenta de Google y cierra Chrome cuando veas YouTube Studio.');
-      setTimeout(() => location.reload(), 3000);
+      setTimeout(() => location.reload(), 4000);
+    } else {
+      alert('Error: ' + d.error);
+    }
+  });
+}
+
+function abrirLoginFacebook() {
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = '⏳ Abriendo Chrome...';
+  fetch(`/dashboard/bots/${BOT_SLUG}/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': _csrf },
+    body: JSON.stringify({ slot: BOT_SLOT, email: document.getElementById('fb_url').value, plataforma: 'facebook' })
+  })
+  .then(r => r.json())
+  .then(d => {
+    btn.disabled = false;
+    btn.textContent = '🔓 Abrir Chrome → iniciar sesión en Facebook';
+    if (d.ok) {
+      alert('Chrome se abrió. Inicia sesión en tu cuenta de Facebook y luego cierra Chrome.');
+      setTimeout(() => location.reload(), 4000);
     } else {
       alert('Error: ' + d.error);
     }

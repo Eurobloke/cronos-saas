@@ -6,6 +6,7 @@ from flask_login import login_required, current_user
 from app.extensions import db, csrf
 from app.models import Plan, Payment, Subscription, Coupon
 from app.services.paypal_service import paypal
+from app.services.dlocal_service import dlocal
 from app.services import credit_service, email_service
 
 payments_bp = Blueprint('payments', __name__, url_prefix='/payments')
@@ -22,7 +23,10 @@ CREDIT_PACKS = [
 @login_required
 def plans():
     active_plans = Plan.query.filter_by(is_active=True).order_by(Plan.sort_order).all()
-    return render_template('payments/plans.html', plans=active_plans, packs=CREDIT_PACKS)
+    return render_template('payments/plans.html',
+                           plans=active_plans,
+                           packs=CREDIT_PACKS,
+                           dlocal_enabled=dlocal.is_configured())
 
 
 # ─── Compra de pack de créditos ───────────────────────────────────────────────
@@ -314,6 +318,266 @@ def paypal_webhook():
 
     return jsonify({'ok': True})
 
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ─── dLocal Go — Pagos desde cualquier país ──────────────────────────────
+# ═══════════════════════════════════════════════════════════════════════════
+
+@payments_bp.route('/dlocal/buy-credits/<pack_id>', methods=['POST'])
+@login_required
+def dlocal_buy_credits(pack_id):
+    pack = next((p for p in CREDIT_PACKS if p['id'] == pack_id), None)
+    if not pack:
+        abort(404)
+
+    coupon_code = request.form.get('coupon', '').strip().upper()
+    coupon = None
+    discount = 0.0
+    final_price = pack['price']
+
+    if coupon_code:
+        coupon = Coupon.query.filter_by(code=coupon_code).first()
+        if coupon and coupon.is_valid():
+            final_price = coupon.apply(pack['price'])
+            discount = round(pack['price'] - final_price, 2)
+        else:
+            flash('Cupón inválido o expirado.', 'warning')
+            return redirect(url_for('payments.plans'))
+
+    # Guardar pago pendiente primero para obtener el ID
+    payment = Payment(
+        user_id=current_user.id,
+        amount=final_price,
+        type='credit_pack',
+        credits_granted=pack['credits'],
+        coupon_id=coupon.id if coupon else None,
+        discount_amount=discount,
+        description=f'{pack["credits"]} créditos ({pack["label"]})',
+        status='pending',
+    )
+    payment.generate_invoice_number()
+    db.session.add(payment)
+    db.session.commit()
+
+    app_url = current_app.config['APP_URL']
+    try:
+        result = dlocal.create_payment(
+            amount=final_price,
+            currency='USD',
+            description=f'{pack["credits"]} créditos — {pack["label"]}',
+            success_url=f'{app_url}/payments/dlocal/success?payment_id={payment.id}',
+            back_url=f'{app_url}/payments/cancel',
+            notification_url=f'{app_url}/payments/dlocal/webhook',
+            order_id=str(payment.id),
+        )
+    except Exception as e:
+        current_app.logger.error(f'dLocal create_payment error: {e}')
+        payment.status = 'failed'
+        db.session.commit()
+        flash('Error al conectar con dLocal. Intenta con PayPal.', 'danger')
+        return redirect(url_for('payments.plans'))
+
+    payment.paypal_order_id = result['payment_id']  # reutilizamos campo para ID dLocal
+    db.session.commit()
+    return redirect(result['redirect_url'])
+
+
+@payments_bp.route('/dlocal/buy-plan/<int:plan_id>/<billing>', methods=['POST'])
+@login_required
+def dlocal_buy_plan(plan_id, billing):
+    if billing not in ('monthly', 'annual'):
+        abort(400)
+    plan = Plan.query.get_or_404(plan_id)
+    if not plan.is_active:
+        abort(404)
+
+    price = plan.price_annual if billing == 'annual' else plan.price_monthly
+    coupon_code = request.form.get('coupon', '').strip().upper()
+    coupon = None
+    discount = 0.0
+    final_price = price
+
+    if coupon_code:
+        coupon = Coupon.query.filter_by(code=coupon_code).first()
+        if coupon and coupon.is_valid():
+            final_price = coupon.apply(price)
+            discount = round(price - final_price, 2)
+        else:
+            flash('Cupón inválido o expirado.', 'warning')
+            return redirect(url_for('payments.plans'))
+
+    label = f'Plan {plan.name} - {"Anual" if billing == "annual" else "Mensual"}'
+    payment = Payment(
+        user_id=current_user.id,
+        amount=final_price,
+        type=f'plan_{billing}',
+        credits_granted=plan.credits_monthly,
+        plan_id=plan.id,
+        coupon_id=coupon.id if coupon else None,
+        discount_amount=discount,
+        description=label,
+        status='pending',
+    )
+    payment.generate_invoice_number()
+    db.session.add(payment)
+    db.session.commit()
+
+    app_url = current_app.config['APP_URL']
+    try:
+        result = dlocal.create_payment(
+            amount=final_price,
+            currency='USD',
+            description=label,
+            success_url=f'{app_url}/payments/dlocal/success?payment_id={payment.id}',
+            back_url=f'{app_url}/payments/cancel',
+            notification_url=f'{app_url}/payments/dlocal/webhook',
+            order_id=str(payment.id),
+        )
+    except Exception as e:
+        current_app.logger.error(f'dLocal plan error: {e}')
+        payment.status = 'failed'
+        db.session.commit()
+        flash('Error al conectar con dLocal. Intenta con PayPal.', 'danger')
+        return redirect(url_for('payments.plans'))
+
+    payment.paypal_order_id = result['payment_id']
+    db.session.commit()
+    return redirect(result['redirect_url'])
+
+
+@payments_bp.route('/dlocal/success')
+@login_required
+def dlocal_success():
+    """dLocal redirige aquí cuando el cliente completa el pago."""
+    payment_id = request.args.get('payment_id', type=int)
+    if not payment_id:
+        flash('Parámetros inválidos.', 'warning')
+        return redirect(url_for('payments.plans'))
+
+    payment = Payment.query.get_or_404(payment_id)
+    if payment.user_id != current_user.id:
+        abort(403)
+
+    if payment.status == 'completed':
+        flash(f'✅ ¡Pago ya procesado! {payment.credits_granted} créditos en tu cuenta.', 'success')
+        return redirect(url_for('payments.success', payment_id=payment.id))
+
+    # Verificar estado en dLocal
+    dlocal_id = payment.paypal_order_id  # campo reutilizado
+    try:
+        if dlocal_id:
+            data = dlocal.get_payment(dlocal_id)
+            status = data.get('status', '').upper()
+            if status in ('PAID', 'COMPLETED', 'APPROVED'):
+                _complete_dlocal_payment(payment, data)
+                db.session.commit()
+                flash(f'✅ ¡Pago completado! {payment.credits_granted} créditos añadidos.', 'success')
+                return redirect(url_for('payments.success', payment_id=payment.id))
+    except Exception as e:
+        current_app.logger.error(f'dLocal verify error: {e}')
+
+    # Pago pendiente — mostrar página de espera
+    flash('Tu pago está siendo procesado. En unos minutos verás los créditos en tu cuenta.', 'info')
+    return render_template('payments/dlocal_pending.html', payment=payment)
+
+
+@payments_bp.route('/dlocal/webhook', methods=['POST'])
+@csrf.exempt
+def dlocal_webhook():
+    """
+    dLocal llama aquí cuando un pago se completa (notificación asíncrona).
+    Este endpoint es la fuente de verdad — no depende de que el usuario
+    regrese al sitio.
+    """
+    body = request.get_data()
+    signature = request.headers.get('X-DLocal-Signature', '')
+
+    if not dlocal.verify_signature(body, signature):
+        current_app.logger.warning('[dLocal Webhook] Firma inválida — ignorado')
+        return jsonify({'ok': False}), 400
+
+    try:
+        import json as _json
+        event = _json.loads(body) if body else {}
+        status = event.get('status', '').upper()
+
+        # Solo procesamos pagos confirmados
+        if status not in ('PAID', 'COMPLETED', 'APPROVED'):
+            return jsonify({'ok': True, 'skipped': status})
+
+        # Buscar pago por ID externo o ID de dLocal
+        dlocal_id = event.get('id') or event.get('payment_id', '')
+        external_id = event.get('external_id', '')
+
+        payment = None
+        if dlocal_id:
+            payment = Payment.query.filter_by(paypal_order_id=dlocal_id).first()
+        if not payment and external_id:
+            payment = Payment.query.get(int(external_id)) if external_id.isdigit() else None
+
+        if not payment:
+            current_app.logger.info(f'[dLocal Webhook] Pago no encontrado: id={dlocal_id}')
+            return jsonify({'ok': True, 'msg': 'pago no encontrado'})
+
+        if payment.status == 'completed':
+            return jsonify({'ok': True, 'msg': 'ya procesado'})
+
+        _complete_dlocal_payment(payment, event)
+        db.session.commit()
+
+        email_service.send_purchase_confirmation(payment.user, payment)
+        current_app.logger.info(
+            f'[dLocal Webhook] Pago #{payment.id} completado. '
+            f'{payment.credits_granted} créditos → {payment.user.email}'
+        )
+
+    except Exception as e:
+        current_app.logger.error(f'[dLocal Webhook] Error: {e}')
+        db.session.rollback()
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
+    return jsonify({'ok': True})
+
+
+def _complete_dlocal_payment(payment: Payment, data: dict):
+    """Marca el pago como completado y otorga créditos / activa plan."""
+    payment.status = 'completed'
+    payment.paypal_capture_id = data.get('id', '') or payment.paypal_order_id
+    payment.paypal_payer_email = (
+        data.get('payer', {}).get('email') or
+        data.get('payer_email') or ''
+    )
+    payment.completed_at = datetime.now(timezone.utc)
+
+    user = payment.user
+    credit_service.grant_credits(
+        user, payment.credits_granted,
+        payment.description,
+        reference=f'payment:{payment.id}'
+    )
+
+    if payment.plan_id:
+        months = 12 if payment.type == 'plan_annual' else 1
+        expires = datetime.now(timezone.utc) + timedelta(days=30 * months)
+        existing = Subscription.query.filter_by(
+            user_id=user.id, plan_id=payment.plan_id, status='active'
+        ).first()
+        if not existing:
+            db.session.add(Subscription(
+                user_id=user.id,
+                plan_id=payment.plan_id,
+                billing_cycle=payment.type.replace('plan_', ''),
+                status='active',
+                expires_at=expires,
+            ))
+
+    if payment.coupon_id:
+        coupon = Coupon.query.get(payment.coupon_id)
+        if coupon:
+            coupon.times_used += 1
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 
 @payments_bp.route('/validate-coupon', methods=['POST'])
 @login_required

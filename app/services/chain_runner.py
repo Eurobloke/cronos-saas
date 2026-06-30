@@ -94,7 +94,15 @@ AVAILABLE_BLOCKS = [
         'label': 'Noticias RD Completo',
         'desc': 'Noticias dominicanas: scraping + imágenes + video',
         'icon': '📰', 'credits': 10, 'category': 'Pipeline completo',
-        'script': 'noticias_rd_bot/MENU.py',
+        'script': 'noticias_rd_bot/main.py',
+        'params': [],
+    },
+    {
+        'slug': 'cristiano_completo',
+        'label': 'Cristiano Completo',
+        'desc': 'Pipeline completo: fotos, shorts y videos con mensajes de fe cristiana',
+        'icon': '✝️', 'credits': 15, 'category': 'Pipeline completo',
+        'script': 'cristiano_bot/main.py',
         'params': [],
     },
 ]

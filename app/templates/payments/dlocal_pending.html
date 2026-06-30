@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}Pago en proceso — {{ app_name }}{% endblock %}
+{% block page_title %}Pago en proceso{% endblock %}
+{% block content %}
+<div class="card" style="max-width:500px;margin:0 auto;text-align:center;">
+  <div style="font-size:3rem;margin-bottom:16px;">⏳</div>
+  <h2 style="font-size:1.3rem;font-weight:800;margin-bottom:8px;">Tu pago está siendo procesado</h2>
+  <p class="text-muted mb-3">
+    dLocal está confirmando tu pago de <strong>${{ "%.2f"|format(payment.amount) }} USD</strong>.<br>
+    Esto puede tardar unos segundos o minutos dependiendo del método de pago elegido.
+  </p>
+  <div class="alert alert-info mb-3" style="text-align:left;">
+    <strong>¿Qué pasa ahora?</strong><br>
+    <ul style="margin:8px 0 0 16px;font-size:0.88rem;">
+      <li>Cuando dLocal confirme el pago, los créditos aparecerán automáticamente en tu cuenta.</li>
+      <li>También recibirás un email de confirmación.</li>
+      <li>Si pagaste con transferencia bancaria, puede tardar hasta 1 hora.</li>
+    </ul>
+  </div>
+  <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+    <a href="{{ url_for('dashboard.billing') }}" class="btn btn-primary">
+      🔄 Verificar mis créditos
+    </a>
+    <a href="{{ url_for('payments.plans') }}" class="btn btn-outline">
+      ← Volver a planes
+    </a>
+  </div>
+  <p class="text-muted text-xs mt-3">
+    ¿Problemas con tu pago? Escríbenos a soporte con el número de factura: <strong>{{ payment.invoice_number }}</strong>
+  </p>
+</div>
+{% endblock %}

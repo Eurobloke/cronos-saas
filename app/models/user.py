@@ -83,6 +83,16 @@ class User(UserMixin, db.Model):
         return True
 
     @property
+    def max_bot_slots(self) -> int:
+        """Número de instancias (slots) por bot que puede tener el usuario."""
+        if self.is_admin():
+            return 4
+        sub = self.active_subscription
+        if sub and sub.plan:
+            return sub.plan.max_bot_slots or 1
+        return 1  # sin plan = 1 slot
+
+    @property
     def plan(self):
         """Retorna la suscripción activa del usuario, o None."""
         return self.active_subscription.plan if self.active_subscription else None

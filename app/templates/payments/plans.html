@@ -88,15 +88,31 @@
     <div class="plan-price mb-1">${{ pack.price }}<span> USD</span></div>
     <div class="text-accent font-bold mb-2">🪙 {{ pack.credits }} créditos</div>
     <div class="text-xs text-muted mb-3">Sin suscripción — úsalos cuando quieras</div>
-    <form method="POST" action="{{ url_for('payments.buy_credits', pack_id=pack.id) }}">
+
+    <div class="form-group mb-2">
+      <input class="form-control coupon-field" placeholder="Cupón (opcional)">
+    </div>
+
+    <!-- PayPal -->
+    <form method="POST" action="{{ url_for('payments.buy_credits', pack_id=pack.id) }}" class="pay-form mb-1">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <div class="form-group mb-2">
-        <input id="coupon-input" name="coupon" class="form-control" placeholder="Cupón (opcional)">
-      </div>
-      <button type="submit" class="btn btn-primary w-full" style="justify-content:center;">
-        💳 Comprar con PayPal
+      <input type="hidden" name="coupon" class="coupon-hidden">
+      <button type="submit" class="btn btn-primary w-full" style="justify-content:center;background:#003087;">
+        <img src="https://www.paypalobjects.com/webstatic/icon/pp258.png" style="height:16px;vertical-align:middle;margin-right:6px;" alt="">
+        Pagar con PayPal
       </button>
     </form>
+
+    <!-- dLocal Go -->
+    {% if dlocal_enabled %}
+    <form method="POST" action="{{ url_for('payments.dlocal_buy_credits', pack_id=pack.id) }}" class="pay-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="coupon" class="coupon-hidden">
+      <button type="submit" class="btn w-full" style="justify-content:center;background:#00b14f;color:#fff;border:none;">
+        🌍 Pagar con dLocal (tarjeta/banco local)
+      </button>
+    </form>
+    {% endif %}
   </div>
   {% endfor %}
 </div>
@@ -130,31 +146,83 @@
     <div class="plan-feature">✓ {{ feature }}</div>
     {% endfor %}
     <div class="divider"></div>
-    <form method="POST" action="{{ url_for('payments.buy_plan', plan_id=plan.id, billing='monthly') }}">
+
+    <!-- Cupón plan -->
+    <div class="form-group mb-2">
+      <input class="form-control coupon-field" placeholder="Cupón (opcional)">
+    </div>
+
+    <!-- PayPal mensual/anual -->
+    <form method="POST" action="{{ url_for('payments.buy_plan', plan_id=plan.id, billing='monthly') }}" class="pay-form mb-1">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <button type="submit" class="btn btn-primary w-full mb-1" style="justify-content:center;">
-        💳 Mensual — ${{ "%.2f"|format(plan.price_monthly) }}/mes
+      <input type="hidden" name="coupon" class="coupon-hidden">
+      <button type="submit" class="btn w-full mb-1" style="justify-content:center;background:#003087;color:#fff;border:none;">
+        <img src="https://www.paypalobjects.com/webstatic/icon/pp258.png" style="height:14px;vertical-align:middle;margin-right:5px;" alt="">
+        PayPal — ${{ "%.2f"|format(plan.price_monthly) }}/mes
       </button>
     </form>
-    <form method="POST" action="{{ url_for('payments.buy_plan', plan_id=plan.id, billing='annual') }}">
+    <form method="POST" action="{{ url_for('payments.buy_plan', plan_id=plan.id, billing='annual') }}" class="pay-form mb-1">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <button type="submit" class="btn btn-outline w-full" style="justify-content:center;">
-        💳 Anual — ${{ "%.2f"|format(plan.price_annual) }}/año
+      <input type="hidden" name="coupon" class="coupon-hidden">
+      <button type="submit" class="btn btn-outline w-full mb-1" style="justify-content:center;">
+        <img src="https://www.paypalobjects.com/webstatic/icon/pp258.png" style="height:14px;vertical-align:middle;margin-right:5px;" alt="">
+        PayPal anual — ${{ "%.2f"|format(plan.price_annual) }}/año
         {% if plan.annual_savings_percent() > 0 %}
-        <span class="badge badge-success ml-1">-{{ plan.annual_savings_percent() }}%</span>
+        <span class="badge badge-success">-{{ plan.annual_savings_percent() }}%</span>
         {% endif %}
       </button>
     </form>
+
+    {% if dlocal_enabled %}
+    <!-- dLocal mensual/anual -->
+    <form method="POST" action="{{ url_for('payments.dlocal_buy_plan', plan_id=plan.id, billing='monthly') }}" class="pay-form mb-1">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="coupon" class="coupon-hidden">
+      <button type="submit" class="btn w-full mb-1" style="justify-content:center;background:#00b14f;color:#fff;border:none;">
+        🌍 dLocal — ${{ "%.2f"|format(plan.price_monthly) }}/mes
+      </button>
+    </form>
+    <form method="POST" action="{{ url_for('payments.dlocal_buy_plan', plan_id=plan.id, billing='annual') }}" class="pay-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="coupon" class="coupon-hidden">
+      <button type="submit" class="btn w-full" style="justify-content:center;background:#009b45;color:#fff;border:none;">
+        🌍 dLocal anual — ${{ "%.2f"|format(plan.price_annual) }}/año
+        {% if plan.annual_savings_percent() > 0 %}
+        <span class="badge" style="background:rgba(255,255,255,0.2);">-{{ plan.annual_savings_percent() }}%</span>
+        {% endif %}
+      </button>
+    </form>
+    {% endif %}
   </div>
   {% endfor %}
 </div>
 
 <div class="alert alert-info" style="font-size:0.85rem;">
-  🔒 Pagos procesados de forma segura por <strong>PayPal</strong>.
-  No almacenamos datos de tarjetas. Cancela en cualquier momento sin penalización.
-  <br><br>
-  💡 <strong>¿Por qué somos más baratos?</strong> Usamos IA local (sin costos de API externos por cada video),
+  🔒 Pagos seguros procesados por <strong>PayPal</strong> y <strong>dLocal Go</strong>.
+  No almacenamos datos de tarjetas. Cancela en cualquier momento sin penalización.<br><br>
+  🌍 <strong>dLocal Go</strong> acepta tarjetas locales, transferencias bancarias y más de 100 métodos de pago en toda América Latina, África y Asia.<br><br>
+  💡 <strong>¿Por qué somos más baratos?</strong> Usamos IA optimizada que reduce costos operativos,
   lo que nos permite ofrecerte precios 3–5× menores que la competencia.
 </div>
+
+<script>
+// Sincronizar campo cupón con los formularios ocultos de la misma tarjeta
+document.querySelectorAll('.plan-card, .plan-card > div').forEach(function(card) {
+  // Encontrar la tarjeta padre correcta
+});
+// Solución simple: por índice de tarjeta
+document.addEventListener('DOMContentLoaded', function() {
+  var cards = document.querySelectorAll('.plan-card');
+  cards.forEach(function(card) {
+    var couponField = card.querySelector('.coupon-field');
+    var hiddenFields = card.querySelectorAll('.coupon-hidden');
+    if (couponField) {
+      couponField.addEventListener('input', function() {
+        hiddenFields.forEach(function(h) { h.value = couponField.value; });
+      });
+    }
+  });
+});
+</script>
 
 {% endblock %}

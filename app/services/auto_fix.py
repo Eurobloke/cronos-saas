@@ -152,7 +152,8 @@ def ejecutar_con_autofix(
     cmd_extra: list = None,
     timeout: int = 3600,
     update_fn=None,
-) -> tuple[bool, str]:
+    extra_env: dict = None,
+) -> tuple:
     """
     Ejecuta un script con auto-corrección en tiempo real.
 
@@ -174,6 +175,8 @@ def ejecutar_con_autofix(
         'PYTHONIOENCODING': 'utf-8',
         'PYTHONUTF8': '1',
     }
+    if extra_env:
+        env_extra.update(extra_env)
 
     for intento in range(1, MAX_REINTENTOS + 1):
         import os

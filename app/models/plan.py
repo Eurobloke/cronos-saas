@@ -14,6 +14,7 @@ class Plan(db.Model):
     price_annual = db.Column(db.Float, default=0.0)
     credits_monthly = db.Column(db.Integer, default=0)
     features = db.Column(db.Text, default='[]')   # JSON list of feature strings
+    max_bot_slots = db.Column(db.Integer, default=1)  # cuántas instancias por bot
     is_active = db.Column(db.Boolean, default=True)
     is_popular = db.Column(db.Boolean, default=False)
     sort_order = db.Column(db.Integer, default=0)

@@ -186,6 +186,15 @@
       </div>
     </div>
 
+    <!-- Descargar contenido -->
+    <div class="card mb-2">
+      <div class="card-title">📥 Descargar contenido</div>
+      <p class="text-xs text-muted mb-2">Descarga todos los videos e imágenes generados en un ZIP.</p>
+      <a href="{{ url_for('dashboard.bot_horoscopo_download') }}" class="btn btn-outline w-full">
+        ⬇️ Descargar mi contenido (.zip)
+      </a>
+    </div>
+
     <!-- Generar ahora -->
     <div class="card">
       <div class="card-title">⚡ Generar ahora</div>
@@ -196,14 +205,39 @@
           <label class="form-label">Fecha</label>
           <input type="date" name="fecha" class="form-control" value="{{ hoy }}">
         </div>
-        <div class="form-group">
+
+        <!-- YouTube -->
+        <div style="background:var(--bg3);border-radius:10px;padding:12px;margin-bottom:10px;">
+          <div class="text-sm font-bold mb-2" style="color:#ff0000;">▶️ YouTube</div>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:6px;">
+            <input type="checkbox" name="yt_shorts" value="1">
+            <span class="text-sm">Publicar como <strong>Short</strong> (vertical ≤60s)</span>
+          </label>
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
             <input type="checkbox" name="subir_youtube" value="1" {% if sesion_activa %}checked{% endif %}>
-            <span class="text-sm">Subir a YouTube al terminar</span>
+            <span class="text-sm">Publicar como <strong>Video largo</strong></span>
           </label>
         </div>
+
+        <!-- Facebook -->
+        <div style="background:var(--bg3);border-radius:10px;padding:12px;margin-bottom:12px;">
+          <div class="text-sm font-bold mb-2" style="color:#1877f2;">📘 Facebook</div>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:6px;">
+            <input type="checkbox" name="fb_reels" value="1" {% if fb_url %}checked{% endif %}>
+            <span class="text-sm">Publicar <strong>Reels</strong> (video corto)</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:6px;">
+            <input type="checkbox" name="publicar_facebook" value="1">
+            <span class="text-sm">Publicar <strong>Video largo</strong></span>
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="checkbox" name="fb_fotos" value="1">
+            <span class="text-sm">Publicar <strong>Fotos</strong></span>
+          </label>
+        </div>
+
         <button type="submit" class="btn btn-success w-full"
-          {% if current_user.credits < 20 %}disabled title="Necesitas 20 créditos"{% endif %}>
+          {% if not current_user.is_admin() and current_user.credits < 20 %}disabled title="Necesitas 20 créditos"{% endif %}>
           🚀 Generar horóscopo (20 créditos)
         </button>
       </form>
