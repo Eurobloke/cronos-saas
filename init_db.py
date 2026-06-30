@@ -40,9 +40,11 @@ def init():
         # Migración de columnas nuevas (segura, no borra datos)
         _migrate_columns(db.engine)
 
-        # Admin por defecto
+        # Admin por defecto — crea o actualiza credenciales
         admin_email = app.config['ADMIN_EMAIL']
-        if not User.query.filter_by(email=admin_email).first():
+        admin_password = app.config['ADMIN_PASSWORD']
+        admin = User.query.filter_by(role='admin').first()
+        if not admin:
             admin = User(
                 email=admin_email,
                 username='Administrador',
@@ -50,12 +52,16 @@ def init():
                 email_verified=True,
                 credits=9999,
             )
-            admin.set_password(app.config['ADMIN_PASSWORD'])
+            admin.set_password(admin_password)
             db.session.add(admin)
             db.session.flush()
             print(f'✅ Admin creado: {admin_email}')
         else:
-            print(f'ℹ️  Admin ya existe: {admin_email}')
+            admin.email = admin_email
+            admin.set_password(admin_password)
+            admin.credits = 9999
+            admin.email_verified = True
+            print(f'✅ Admin actualizado: {admin_email}')
 
         # Planes (precios competitivos — por debajo del mercado)
         planes = [
