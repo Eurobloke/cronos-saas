@@ -1,0 +1,44 @@
+{% extends 'public/base_public.html' %}
+{% block title %}Preguntas frecuentes — Cronos AI{% endblock %}
+{% block content %}
+<div class="pub-content">
+  <div style="text-align:center;margin-bottom:48px;">
+    <h1>Preguntas frecuentes</h1>
+    <p>Todo lo que necesitas saber sobre Cronos AI.</p>
+  </div>
+
+  {% set faqs = [
+    ("¿Qué es Cronos AI?", "Cronos AI es una plataforma SaaS que automatiza la creación y publicación de contenido digital usando Inteligencia Artificial. Genera guiones, narración con voz humana, imágenes, subtítulos y videos completos para YouTube y Facebook."),
+    ("¿Necesito conocimientos técnicos?", "No. La plataforma está diseñada para ser simple. Solo configuras tu canal, eliges el tipo de contenido y presionas un botón. El sistema hace el resto automáticamente."),
+    ("¿Qué son los créditos?", "Los créditos son la moneda de la plataforma. Cada acción consume una cantidad de créditos (ejemplo: generar un video completo cuesta 20 créditos). Puedes comprar packs de créditos o suscribirte a un plan mensual para recibirlos automáticamente."),
+    ("¿Puedo cancelar mi suscripción en cualquier momento?", "Sí. Puedes cancelar tu suscripción cuando quieras desde tu panel de cuenta. No hay penalización por cancelación anticipada."),
+    ("¿Qué métodos de pago aceptan?", "Aceptamos PayPal y tarjetas de crédito/débito locales a través de dLocal Go, incluyendo tarjetas de más de 100 países de América Latina, África y Asia."),
+    ("¿Los videos se publican automáticamente?", "Sí. Una vez que configuras tu cuenta de YouTube o Facebook en la plataforma, Cronos AI puede publicar los videos automáticamente en el horario que establezcas."),
+    ("¿Puedo usar Cronos AI para varios canales?", "Depende de tu plan. El plan Starter incluye 1 canal de YouTube. Creator hasta 5 canales. Agency tiene canales ilimitados."),
+    ("¿Qué pasa si me quedo sin créditos?", "Puedes comprar más créditos en cualquier momento desde la sección 'Planes y créditos' sin necesidad de cambiar tu plan de suscripción."),
+    ("¿Los contenidos son únicos o genéricos?", "Cada pieza de contenido es generada de forma única. El sistema usa IA para crear guiones originales basados en el tema y estilo que configures."),
+    ("¿Tienen soporte en español?", "Sí. Todo nuestro soporte es en español. Puedes contactarnos por correo o WhatsApp y recibirás respuesta en tu idioma."),
+  ] %}
+
+  <div style="display:flex;flex-direction:column;gap:12px;">
+    {% for pregunta, respuesta in faqs %}
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+      <details style="padding:0;">
+        <summary style="padding:18px 22px;font-weight:600;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;">
+          {{ pregunta }}
+          <span style="color:var(--accent);font-size:1.2rem;flex-shrink:0;margin-left:12px;">+</span>
+        </summary>
+        <div style="padding:0 22px 18px;color:var(--text-muted);line-height:1.7;border-top:1px solid var(--border);padding-top:14px;">
+          {{ respuesta }}
+        </div>
+      </details>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div style="text-align:center;margin-top:48px;background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:32px;">
+    <p style="font-size:1.1rem;font-weight:600;margin-bottom:16px;">¿No encontraste tu respuesta?</p>
+    <a href="{{ url_for('public.contact') }}" class="btn btn-primary">Contáctanos directamente</a>
+  </div>
+</div>
+{% endblock %}

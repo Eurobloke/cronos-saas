@@ -1,0 +1,55 @@
+{% extends 'public/base_public.html' %}
+{% block title %}Política de reembolsos — Cronos AI{% endblock %}
+{% block content %}
+<div class="pub-content">
+  <h1>Política de reembolsos</h1>
+  <p style="color:var(--text-muted);font-size:0.85rem;">Última actualización: 30 de junio de 2026</p>
+
+  <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.3);border-radius:12px;padding:20px;margin-bottom:28px;">
+    <p style="margin:0;font-weight:600;">Resumen: Ofrecemos reembolso completo dentro de los 7 días posteriores a la compra si no ha consumido créditos. Para suscripciones, puede cancelar en cualquier momento.</p>
+  </div>
+
+  <h2>1. Packs de créditos (pago único)</h2>
+  <p>Los packs de créditos son elegibles para reembolso completo si:</p>
+  <ul>
+    <li>La solicitud se realiza dentro de los <strong>7 días calendario</strong> desde la fecha de compra</li>
+    <li>No se han consumido créditos del pack adquirido</li>
+  </ul>
+  <p>Si ha consumido algunos créditos, el reembolso será proporcional a los créditos no utilizados.</p>
+
+  <h2>2. Suscripciones mensuales</h2>
+  <p>Para planes de suscripción mensual:</p>
+  <ul>
+    <li>Puede cancelar su suscripción en cualquier momento sin penalización</li>
+    <li>Al cancelar, mantendrá acceso hasta el final del período pagado</li>
+    <li>Se ofrecerá reembolso proporcional si la cancelación ocurre dentro de los primeros <strong>3 días</strong> del período facturado y no ha utilizado créditos del mes</li>
+  </ul>
+
+  <h2>3. Suscripciones anuales</h2>
+  <p>Para planes anuales:</p>
+  <ul>
+    <li>Reembolso completo dentro de los primeros <strong>14 días</strong> si no ha consumido créditos</li>
+    <li>Después de 14 días, el reembolso será proporcional a los meses no utilizados</li>
+  </ul>
+
+  <h2>4. Casos no elegibles para reembolso</h2>
+  <ul>
+    <li>Créditos ya consumidos en generación de contenido</li>
+    <li>Solicitudes realizadas después de los plazos indicados</li>
+    <li>Cuentas suspendidas por violación de los Términos de servicio</li>
+  </ul>
+
+  <h2>5. Cómo solicitar un reembolso</h2>
+  <p>Envíe un correo a <a href="mailto:robertomartem@gmail.com">robertomartem@gmail.com</a> con:</p>
+  <ul>
+    <li>Su correo registrado en Cronos AI</li>
+    <li>Número de factura o transacción</li>
+    <li>Motivo de la solicitud</li>
+  </ul>
+  <p>Procesamos las solicitudes en un plazo de <strong>5 días hábiles</strong>. El reembolso se acredita al mismo método de pago utilizado.</p>
+
+  <div style="text-align:center;margin-top:40px;">
+    <a href="{{ url_for('public.contact') }}" class="btn btn-primary">Solicitar reembolso</a>
+  </div>
+</div>
+{% endblock %}

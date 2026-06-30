@@ -30,12 +30,14 @@ def create_app(config_name: str = None) -> Flask:
     from app.admin import admin_bp
     from app.payments import payments_bp
     from app.api import api_bp
+    from app.public import public_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(payments_bp)
     app.register_blueprint(api_bp)
+    app.register_blueprint(public_bp)
 
     # Ruta raíz
     @app.route('/')

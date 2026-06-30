@@ -3,72 +3,255 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ app_name }} — Generación de contenido con IA</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+  <meta name="description" content="Cronos AI — Automatización de contenido para YouTube y Facebook con Inteligencia Artificial. Genera videos, narración y publica automáticamente.">
+  <title>Cronos AI — Automatización de contenido con IA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/cronos.css') }}">
   <style>
-    .hero { min-height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 40px 20px; background: radial-gradient(ellipse at top, rgba(99,102,241,0.15) 0%, transparent 70%); }
-    .hero h1 { font-size: clamp(2.5rem, 6vw, 5rem); font-weight: 900; background: linear-gradient(135deg, #6366f1, #38bdf8, #22c55e); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 20px; }
-    .hero p { font-size: 1.2rem; color: var(--text-muted); max-width: 640px; margin: 0 auto 36px; }
+    body { margin: 0; }
+    .pub-nav { position: sticky; top: 0; z-index: 100; background: rgba(15,15,20,0.95); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); padding: 0 40px; display: flex; align-items: center; justify-content: space-between; height: 64px; }
+    .pub-logo { font-weight: 900; font-size: 1.3rem; background: linear-gradient(135deg, #6366f1, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; }
+    .pub-nav-links { display: flex; gap: 28px; align-items: center; }
+    .pub-nav-links a { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; font-weight: 500; }
+    .pub-nav-links a:hover { color: var(--text); }
+    .hero { min-height: 92vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 60px 20px; background: radial-gradient(ellipse at top, rgba(99,102,241,0.18) 0%, transparent 65%); }
+    .hero h1 { font-size: clamp(2.8rem, 6vw, 5.5rem); font-weight: 900; background: linear-gradient(135deg, #6366f1, #38bdf8, #22c55e); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 20px; line-height: 1.1; }
+    .hero p { font-size: 1.2rem; color: var(--text-muted); max-width: 640px; margin: 0 auto 36px; line-height: 1.7; }
     .hero-btns { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
-    .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; max-width: 1100px; margin: 60px auto; padding: 0 20px; }
-    .feature-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 28px; }
-    .feature-icon { font-size: 2rem; margin-bottom: 12px; }
-    .feature-title { font-weight: 700; margin-bottom: 8px; }
-    .feature-desc { color: var(--text-muted); font-size: 0.9rem; }
+    .badge-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 40px; }
+    .badge { background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.3); border-radius: 20px; padding: 6px 14px; font-size: 0.82rem; color: var(--accent); font-weight: 600; }
+    .section { max-width: 1100px; margin: 0 auto; padding: 80px 24px; }
+    .section-title { text-align: center; font-size: 2rem; font-weight: 900; margin-bottom: 12px; }
+    .section-sub { text-align: center; color: var(--text-muted); margin-bottom: 48px; font-size: 1rem; }
+    .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+    .feature-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 28px; transition: border-color .2s, transform .2s; }
+    .feature-card:hover { border-color: #6366f1; transform: translateY(-2px); }
+    .feature-icon { font-size: 2.2rem; margin-bottom: 14px; }
+    .feature-title { font-weight: 700; margin-bottom: 8px; font-size: 1rem; }
+    .feature-desc { color: var(--text-muted); font-size: 0.88rem; line-height: 1.65; }
+    .bots-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+    .bot-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 28px; text-align: center; }
+    .bot-icon { font-size: 2.8rem; margin-bottom: 12px; }
+    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; }
+    .step { text-align: center; }
+    .step-num { width: 48px; height: 48px; background: linear-gradient(135deg,#6366f1,#38bdf8); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.2rem; margin: 0 auto 16px; }
+    .cta { background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(56,189,248,0.1)); border: 1px solid rgba(99,102,241,0.3); border-radius: 24px; padding: 60px 40px; text-align: center; }
+    .pub-footer { background: var(--bg2); border-top: 1px solid var(--border); padding: 48px 40px 32px; }
+    .pub-footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 40px; max-width: 1100px; margin: 0 auto 40px; }
+    .pub-footer a { display: block; color: var(--text-muted); text-decoration: none; font-size: 0.85rem; margin-bottom: 8px; }
+    .pub-footer a:hover { color: var(--text); }
+    .pub-footer h4 { font-weight: 700; margin-bottom: 14px; font-size: 0.9rem; }
+    .pub-footer-bottom { max-width: 1100px; margin: 0 auto; border-top: 1px solid var(--border); padding-top: 24px; display: flex; justify-content: space-between; font-size: 0.82rem; color: var(--text-muted); flex-wrap: wrap; gap: 8px; }
+    @media(max-width:768px) { .pub-nav-links { display:none; } .pub-footer-grid { grid-template-columns:1fr 1fr; } }
   </style>
 </head>
 <body>
-<nav style="padding: 16px 40px; display:flex; justify-content: space-between; align-items:center; border-bottom: 1px solid var(--border); background: var(--bg2);">
-  <h2 style="font-weight:900; background: linear-gradient(135deg,#6366f1,#38bdf8); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">⚡ {{ app_name }}</h2>
-  <div style="display:flex; gap:12px;">
-    <a href="{{ url_for('auth.login') }}" class="btn btn-outline">Iniciar sesión</a>
-    <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Empezar gratis</a>
+
+<!-- NAV -->
+<nav class="pub-nav">
+  <a href="/" class="pub-logo">⚡ Cronos AI</a>
+  <div class="pub-nav-links">
+    <a href="{{ url_for('public.about') }}">Nosotros</a>
+    <a href="{{ url_for('public.pricing') }}">Precios</a>
+    <a href="{{ url_for('public.faq') }}">FAQ</a>
+    <a href="{{ url_for('public.contact') }}">Contacto</a>
+  </div>
+  <div style="display:flex;gap:10px;">
+    <a href="{{ url_for('auth.login') }}" class="btn btn-outline" style="padding:8px 18px;font-size:0.88rem;">Iniciar sesión</a>
+    <a href="{{ url_for('auth.register') }}" class="btn btn-primary" style="padding:8px 18px;font-size:0.88rem;">Empezar gratis</a>
   </div>
 </nav>
 
+<!-- HERO -->
 <div class="hero">
   <div>
-    <h1>Genera contenido para YouTube con IA</h1>
-    <p>Guiones, narración, imágenes, subtítulos, videos completos y publicación automática — todo desde un solo panel.</p>
+    <div class="badge-row">
+      <span class="badge">🤖 IA avanzada</span>
+      <span class="badge">▶️ YouTube automático</span>
+      <span class="badge">👍 Facebook automático</span>
+      <span class="badge">🌍 Soporte en español</span>
+    </div>
+    <h1>Genera y publica contenido<br>con IA automáticamente</h1>
+    <p>Cronos AI crea videos completos para YouTube y Facebook — guiones, narración, imágenes, subtítulos y publicación — sin que toques el teclado.</p>
     <div class="hero-btns">
-      <a href="{{ url_for('auth.register') }}" class="btn btn-primary" style="font-size:1rem; padding: 14px 32px;">🚀 Comenzar gratis</a>
-      <a href="{{ url_for('payments.plans') }}" class="btn btn-outline" style="font-size:1rem; padding: 14px 32px;">Ver planes</a>
+      <a href="{{ url_for('auth.register') }}" class="btn btn-primary" style="font-size:1rem;padding:14px 36px;">🚀 Comenzar gratis</a>
+      <a href="{{ url_for('public.pricing') }}" class="btn btn-outline" style="font-size:1rem;padding:14px 36px;">Ver planes</a>
     </div>
   </div>
 </div>
 
-<div class="features">
-  <div class="feature-card">
-    <div class="feature-icon">📝</div>
-    <div class="feature-title">Guiones con IA</div>
-    <div class="feature-desc">Genera guiones de 20+ minutos con personalidad editorial única e investigación en tiempo real.</div>
-  </div>
-  <div class="feature-card">
-    <div class="feature-icon">🎙️</div>
-    <div class="feature-title">Narración humanizada</div>
-    <div class="feature-desc">Voz con Edge-TTS procesada con ffmpeg para sonar natural. +40 voces disponibles.</div>
-  </div>
-  <div class="feature-card">
-    <div class="feature-icon">🎬</div>
-    <div class="feature-title">Videos automáticos</div>
-    <div class="feature-desc">Pipeline completo: texto → imagen → audio → subtítulos → video listo para subir.</div>
-  </div>
-  <div class="feature-card">
-    <div class="feature-icon">▶️</div>
-    <div class="feature-title">Publicación automática</div>
-    <div class="feature-desc">Sube directamente a YouTube y Facebook sin abrir el navegador manualmente.</div>
-  </div>
-  <div class="feature-card">
-    <div class="feature-icon">🪙</div>
-    <div class="feature-title">Sistema de créditos</div>
-    <div class="feature-desc">Paga solo lo que usas. Compra packs o suscríbete para créditos mensuales.</div>
-  </div>
-  <div class="feature-card">
-    <div class="feature-icon">💳</div>
-    <div class="feature-title">Pagos con PayPal</div>
-    <div class="feature-desc">Compra de forma segura. Comprobantes PDF descargables y historial completo.</div>
+<!-- FUNCIONES -->
+<div class="section">
+  <div class="section-title">Todo lo que necesitas en un solo lugar</div>
+  <div class="section-sub">Pipeline completo de producción de contenido digital con IA</div>
+  <div class="features">
+    <div class="feature-card">
+      <div class="feature-icon">📝</div>
+      <div class="feature-title">Guiones con IA</div>
+      <div class="feature-desc">Genera guiones originales de 20+ minutos con personalidad editorial única e investigación en tiempo real.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🎙️</div>
+      <div class="feature-title">Narración humanizada</div>
+      <div class="feature-desc">Más de 40 voces naturales en español. Procesadas con técnicas de humanización para sonar auténticas.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🖼️</div>
+      <div class="feature-title">Imágenes automáticas</div>
+      <div class="feature-desc">Genera miniaturas e imágenes de fondo adaptadas a cada video con diseño profesional.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">💬</div>
+      <div class="feature-title">Subtítulos automáticos</div>
+      <div class="feature-desc">Sincronizados perfectamente con el audio. Formato profesional listo para YouTube.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🎬</div>
+      <div class="feature-title">Ensamblaje de video</div>
+      <div class="feature-desc">Video completo generado con FFmpeg: fondo, narración, subtítulos y efectos visuales.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📅</div>
+      <div class="feature-title">Publicación programada</div>
+      <div class="feature-desc">Configura horarios automáticos. Cronos publica por ti en YouTube y Facebook sin intervención manual.</div>
+    </div>
   </div>
 </div>
+
+<!-- BOTS -->
+<div style="background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:80px 24px;">
+  <div style="max-width:1100px;margin:0 auto;">
+    <div class="section-title">Bots especializados por nicho</div>
+    <div class="section-sub">Cada bot está optimizado para un tipo de contenido específico</div>
+    <div class="bots-grid">
+      <div class="bot-card">
+        <div class="bot-icon">♈</div>
+        <div style="font-weight:700;margin-bottom:8px;">Horóscopo Bot</div>
+        <div style="color:var(--text-muted);font-size:0.85rem;">Genera los 12 signos diariamente con narración, imágenes y publicación automática.</div>
+      </div>
+      <div class="bot-card">
+        <div class="bot-icon">💪</div>
+        <div style="font-weight:700;margin-bottom:8px;">Motivación Bot</div>
+        <div style="color:var(--text-muted);font-size:0.85rem;">Videos motivacionales con frases impactantes, música de fondo y voz inspiradora.</div>
+      </div>
+      <div class="bot-card">
+        <div class="bot-icon">📰</div>
+        <div style="font-weight:700;margin-bottom:8px;">Noticias RD Bot</div>
+        <div style="color:var(--text-muted);font-size:0.85rem;">Scraping de noticias dominicanas, miniaturas estilo CNN y publicación automática.</div>
+      </div>
+      <div class="bot-card">
+        <div class="bot-icon">✝️</div>
+        <div style="font-weight:700;margin-bottom:8px;">Cristiano Bot</div>
+        <div style="color:var(--text-muted);font-size:0.85rem;">Contenido de fe cristiana: versículos, reflexiones y videos devocionales diarios.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CÓMO FUNCIONA -->
+<div class="section">
+  <div class="section-title">¿Cómo funciona?</div>
+  <div class="section-sub">En 3 simples pasos estás generando contenido automáticamente</div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div style="font-weight:700;margin-bottom:8px;">Crea tu cuenta</div>
+      <div style="color:var(--text-muted);font-size:0.88rem;">Regístrate gratis y recibe 10 créditos de bienvenida para probar la plataforma.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div style="font-weight:700;margin-bottom:8px;">Configura tu bot</div>
+      <div style="color:var(--text-muted);font-size:0.88rem;">Conecta tu canal de YouTube o página de Facebook. Elige el nicho y estilo de tu contenido.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div style="font-weight:700;margin-bottom:8px;">¡Listo!</div>
+      <div style="color:var(--text-muted);font-size:0.88rem;">Cronos AI genera y publica automáticamente. Tú solo supervisas los resultados.</div>
+    </div>
+  </div>
+</div>
+
+<!-- PRECIOS RESUMEN -->
+<div style="background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:80px 24px;">
+  <div style="max-width:900px;margin:0 auto;text-align:center;">
+    <div class="section-title">Precios que caben en tu presupuesto</div>
+    <div class="section-sub">3–5× más barato que la competencia porque usamos IA optimizada</div>
+    <div style="display:flex;justify-content:center;gap:20px;flex-wrap:wrap;margin-bottom:36px;">
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:16px;padding:28px 36px;min-width:180px;">
+        <div style="font-size:2rem;font-weight:900;color:var(--accent);">$4.99</div>
+        <div style="font-weight:700;">Starter/mes</div>
+        <div style="color:var(--text-muted);font-size:0.82rem;margin-top:4px;">150 créditos/mes</div>
+      </div>
+      <div style="background:var(--bg);border:2px solid #6366f1;border-radius:16px;padding:28px 36px;min-width:180px;">
+        <div style="font-size:2rem;font-weight:900;color:#6366f1;">$12.99</div>
+        <div style="font-weight:700;">Creator/mes</div>
+        <div style="color:var(--text-muted);font-size:0.82rem;margin-top:4px;">600 créditos/mes</div>
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:16px;padding:28px 36px;min-width:180px;">
+        <div style="font-size:2rem;font-weight:900;color:#f59e0b;">$29.99</div>
+        <div style="font-weight:700;">Agency/mes</div>
+        <div style="color:var(--text-muted);font-size:0.82rem;margin-top:4px;">2,500 créditos/mes</div>
+      </div>
+    </div>
+    <a href="{{ url_for('public.pricing') }}" class="btn btn-outline" style="font-size:0.95rem;padding:12px 28px;">Ver comparativa completa →</a>
+  </div>
+</div>
+
+<!-- CTA FINAL -->
+<div class="section">
+  <div class="cta">
+    <div style="font-size:2rem;font-weight:900;margin-bottom:12px;">Empieza hoy mismo — es gratis</div>
+    <p style="color:var(--text-muted);margin-bottom:28px;font-size:1rem;">Sin tarjeta de crédito. Sin contratos. 10 créditos de bienvenida incluidos.</p>
+    <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
+      <a href="{{ url_for('auth.register') }}" class="btn btn-primary" style="font-size:1rem;padding:14px 36px;">🚀 Crear cuenta gratis</a>
+      <a href="{{ url_for('public.contact') }}" class="btn btn-outline" style="font-size:1rem;padding:14px 36px;">💬 Hablar con soporte</a>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="pub-footer">
+  <div class="pub-footer-grid">
+    <div>
+      <div style="font-weight:900;font-size:1.2rem;background:linear-gradient(135deg,#6366f1,#38bdf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">⚡ Cronos AI</div>
+      <p style="color:var(--text-muted);font-size:0.85rem;margin-top:10px;line-height:1.6;">Plataforma SaaS de automatización de contenido con IA para creadores y agencias digitales de habla hispana.</p>
+      <div style="margin-top:14px;display:flex;gap:12px;">
+        <a href="https://wa.me/18096475756" target="_blank" style="color:#25d366;font-size:0.85rem;">💬 WhatsApp</a>
+        <a href="mailto:robertomartem@gmail.com" style="color:var(--accent);font-size:0.85rem;">✉️ Email</a>
+      </div>
+    </div>
+    <div>
+      <h4>Producto</h4>
+      <a href="/">Inicio</a>
+      <a href="{{ url_for('public.pricing') }}">Precios</a>
+      <a href="{{ url_for('public.faq') }}">FAQ</a>
+      <a href="{{ url_for('public.about') }}">Nosotros</a>
+    </div>
+    <div>
+      <h4>Legal</h4>
+      <a href="{{ url_for('public.privacy') }}">Política de privacidad</a>
+      <a href="{{ url_for('public.terms') }}">Términos y condiciones</a>
+      <a href="{{ url_for('public.refunds') }}">Política de reembolsos</a>
+    </div>
+    <div>
+      <h4>Soporte</h4>
+      <a href="{{ url_for('public.contact') }}">Contacto</a>
+      <a href="mailto:robertomartem@gmail.com">robertomartem@gmail.com</a>
+      <a href="https://wa.me/18096475756" target="_blank">+1 (809) 647-5756</a>
+      <a href="{{ url_for('auth.login') }}">Iniciar sesión</a>
+    </div>
+  </div>
+  <div class="pub-footer-bottom">
+    <span>© 2026 Cronos AI. Todos los derechos reservados.</span>
+    <span>
+      <a href="{{ url_for('public.privacy') }}">Privacidad</a> ·
+      <a href="{{ url_for('public.terms') }}">Términos</a> ·
+      <a href="{{ url_for('public.refunds') }}">Reembolsos</a> ·
+      <a href="{{ url_for('public.contact') }}">Contacto</a>
+    </span>
+  </div>
+</footer>
+
 </body>
 </html>

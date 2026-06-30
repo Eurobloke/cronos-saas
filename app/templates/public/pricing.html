@@ -1,0 +1,75 @@
+{% extends 'public/base_public.html' %}
+{% block title %}Precios — Cronos AI{% endblock %}
+{% block content %}
+<div style="max-width:1100px;margin:0 auto;padding:60px 24px;">
+  <div style="text-align:center;margin-bottom:52px;">
+    <h1 style="font-size:2.5rem;font-weight:900;margin-bottom:12px;">Planes simples y transparentes</h1>
+    <p style="color:var(--text-muted);font-size:1.1rem;">Sin contratos. Sin sorpresas. Cancela cuando quieras.</p>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;margin-bottom:60px;">
+    {% for plan in plans %}
+    <div style="background:var(--bg2);border:2px solid {% if plan.is_popular %}#6366f1{% else %}var(--border){% endif %};border-radius:20px;padding:32px;position:relative;">
+      {% if plan.is_popular %}
+      <div style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:#6366f1;color:#fff;padding:4px 18px;border-radius:20px;font-size:0.8rem;font-weight:700;white-space:nowrap;">🚀 Más popular</div>
+      {% endif %}
+      <div style="font-size:1.3rem;font-weight:900;margin-bottom:6px;">{{ plan.name }}</div>
+      <div style="color:var(--text-muted);font-size:0.88rem;margin-bottom:20px;">{{ plan.description }}</div>
+      <div style="font-size:2.8rem;font-weight:900;margin-bottom:4px;">${{ "%.2f"|format(plan.price_monthly) }}<span style="font-size:1rem;font-weight:400;color:var(--text-muted);">/mes</span></div>
+      <div style="color:var(--text-muted);font-size:0.82rem;margin-bottom:24px;">o ${{ "%.2f"|format(plan.price_annual) }}/año {% if plan.annual_savings_percent() > 0 %}<span style="color:#22c55e;font-weight:600;">• Ahorra {{ plan.annual_savings_percent() }}%</span>{% endif %}</div>
+      <div style="color:var(--accent);font-weight:700;margin-bottom:20px;">🪙 {{ plan.credits_monthly }} créditos/mes</div>
+      {% for feature in plan.get_features() %}
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:0.88rem;">
+        <span style="color:#22c55e;">✓</span> {{ feature }}
+      </div>
+      {% endfor %}
+      <div style="margin-top:24px;">
+        <a href="{{ url_for('auth.register') }}" class="btn {% if plan.is_popular %}btn-primary{% else %}btn-outline{% endif %} w-full" style="justify-content:center;">Comenzar con {{ plan.name }}</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Comparativa -->
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:48px;">
+    <div style="padding:24px 28px;border-bottom:1px solid var(--border);font-weight:800;font-size:1.1rem;">📊 Comparativa completa</div>
+    <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:0.88rem;">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border);">
+            <th style="text-align:left;padding:14px 20px;color:var(--text-muted);">Característica</th>
+            <th style="text-align:center;padding:14px;">🆓 Gratis</th>
+            <th style="text-align:center;padding:14px;color:var(--accent);">⭐ Starter</th>
+            <th style="text-align:center;padding:14px;color:#6366f1;background:rgba(99,102,241,0.06);">🚀 Creator</th>
+            <th style="text-align:center;padding:14px;color:#f59e0b;">🏢 Agency</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in [
+            ("💰 Precio/mes", "$0", "$4.99", "$12.99", "$29.99"),
+            ("🪙 Créditos/mes", "10 (al registrarse)", "150", "600", "2,500"),
+            ("📺 Canales YouTube", "—", "1", "5", "Ilimitados"),
+            ("💾 Almacenamiento", "500 MB", "2 GB", "10 GB", "50 GB"),
+            ("🤖 Peticiones IA/día", "15", "50", "200", "Ilimitadas"),
+            ("🎧 Soporte", "Comunidad", "Email", "Prioritario", "24/7 Dedicado"),
+          ] %}
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:12px 20px;font-weight:600;">{{ row[0] }}</td>
+            <td style="text-align:center;padding:12px;">{{ row[1] }}</td>
+            <td style="text-align:center;padding:12px;color:var(--accent);font-weight:600;">{{ row[2] }}</td>
+            <td style="text-align:center;padding:12px;font-weight:600;background:rgba(99,102,241,0.04);">{{ row[3] }}</td>
+            <td style="text-align:center;padding:12px;color:#f59e0b;font-weight:600;">{{ row[4] }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div style="text-align:center;background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:40px;">
+    <div style="font-size:1.5rem;font-weight:900;margin-bottom:10px;">¿Listo para empezar?</div>
+    <p style="color:var(--text-muted);margin-bottom:24px;">Crea tu cuenta gratis y recibe 10 créditos de bienvenida. Sin tarjeta de crédito.</p>
+    <a href="{{ url_for('auth.register') }}" class="btn btn-primary" style="font-size:1rem;padding:14px 36px;">🚀 Crear cuenta gratis</a>
+  </div>
+</div>
+{% endblock %}

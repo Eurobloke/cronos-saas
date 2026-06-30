@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Cronos AI — Automatización de contenido con IA{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/cronos.css') }}">
+  <style>
+    body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); }
+    .pub-nav { position: sticky; top: 0; z-index: 100; background: rgba(15,15,20,0.95); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); padding: 0 40px; display: flex; align-items: center; justify-content: space-between; height: 64px; }
+    .pub-logo { font-weight: 900; font-size: 1.3rem; background: linear-gradient(135deg, #6366f1, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; }
+    .pub-nav-links { display: flex; gap: 28px; align-items: center; }
+    .pub-nav-links a { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: color .2s; }
+    .pub-nav-links a:hover { color: var(--text); }
+    .pub-nav-btns { display: flex; gap: 10px; }
+    .pub-footer { background: var(--bg2); border-top: 1px solid var(--border); padding: 48px 40px 32px; margin-top: 80px; }
+    .pub-footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 40px; max-width: 1100px; margin: 0 auto 40px; }
+    .pub-footer-brand p { color: var(--text-muted); font-size: 0.88rem; margin-top: 10px; line-height: 1.6; }
+    .pub-footer h4 { font-weight: 700; margin-bottom: 14px; font-size: 0.9rem; }
+    .pub-footer a { display: block; color: var(--text-muted); text-decoration: none; font-size: 0.85rem; margin-bottom: 8px; transition: color .2s; }
+    .pub-footer a:hover { color: var(--text); }
+    .pub-footer-bottom { max-width: 1100px; margin: 0 auto; border-top: 1px solid var(--border); padding-top: 24px; display: flex; justify-content: space-between; font-size: 0.82rem; color: var(--text-muted); flex-wrap: wrap; gap: 8px; }
+    .pub-content { max-width: 860px; margin: 0 auto; padding: 60px 24px; }
+    .pub-content h1 { font-size: 2rem; font-weight: 900; margin-bottom: 8px; }
+    .pub-content h2 { font-size: 1.25rem; font-weight: 700; margin-top: 36px; margin-bottom: 10px; color: var(--accent); }
+    .pub-content p, .pub-content li { color: var(--text-muted); line-height: 1.75; font-size: 0.95rem; }
+    .pub-content ul { padding-left: 20px; }
+    @media(max-width:768px) {
+      .pub-nav-links { display: none; }
+      .pub-footer-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<nav class="pub-nav">
+  <a href="{{ url_for('index') }}" class="pub-logo">⚡ Cronos AI</a>
+  <div class="pub-nav-links">
+    <a href="{{ url_for('index') }}">Inicio</a>
+    <a href="{{ url_for('public.about') }}">Nosotros</a>
+    <a href="{{ url_for('public.pricing') }}">Precios</a>
+    <a href="{{ url_for('public.faq') }}">FAQ</a>
+    <a href="{{ url_for('public.contact') }}">Contacto</a>
+  </div>
+  <div class="pub-nav-btns">
+    <a href="{{ url_for('auth.login') }}" class="btn btn-outline" style="padding:8px 18px;font-size:0.88rem;">Iniciar sesión</a>
+    <a href="{{ url_for('auth.register') }}" class="btn btn-primary" style="padding:8px 18px;font-size:0.88rem;">Empezar gratis</a>
+  </div>
+</nav>
+
+{% block content %}{% endblock %}
+
+<footer class="pub-footer">
+  <div class="pub-footer-grid">
+    <div class="pub-footer-brand">
+      <div style="font-weight:900;font-size:1.2rem;background:linear-gradient(135deg,#6366f1,#38bdf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">⚡ Cronos AI</div>
+      <p>Plataforma SaaS de automatización de contenido con Inteligencia Artificial para creadores y agencias digitales.</p>
+      <div style="margin-top:14px;display:flex;gap:12px;">
+        <a href="https://wa.me/18096475756" target="_blank" style="color:#25d366;font-size:0.85rem;">💬 WhatsApp</a>
+        <a href="mailto:robertomartem@gmail.com" style="color:var(--accent);font-size:0.85rem;">✉️ Email</a>
+      </div>
+    </div>
+    <div>
+      <h4>Producto</h4>
+      <a href="{{ url_for('index') }}">Inicio</a>
+      <a href="{{ url_for('public.pricing') }}">Precios</a>
+      <a href="{{ url_for('public.faq') }}">FAQ</a>
+      <a href="{{ url_for('public.about') }}">Nosotros</a>
+    </div>
+    <div>
+      <h4>Legal</h4>
+      <a href="{{ url_for('public.privacy') }}">Política de privacidad</a>
+      <a href="{{ url_for('public.terms') }}">Términos y condiciones</a>
+      <a href="{{ url_for('public.refunds') }}">Política de reembolsos</a>
+    </div>
+    <div>
+      <h4>Soporte</h4>
+      <a href="{{ url_for('public.contact') }}">Contacto</a>
+      <a href="mailto:robertomartem@gmail.com">robertomartem@gmail.com</a>
+      <a href="https://wa.me/18096475756" target="_blank">+1 (809) 647-5756</a>
+    </div>
+  </div>
+  <div class="pub-footer-bottom">
+    <span>© 2026 Cronos AI. Todos los derechos reservados.</span>
+    <span>
+      <a href="{{ url_for('public.privacy') }}">Privacidad</a> ·
+      <a href="{{ url_for('public.terms') }}">Términos</a> ·
+      <a href="{{ url_for('public.contact') }}">Contacto</a>
+    </span>
+  </div>
+</footer>
+
+</body>
+</html>
