@@ -3,129 +3,81 @@
 {% block page_title %}Planes y créditos{% endblock %}
 {% block content %}
 
-<!-- Saldo actual -->
-<div class="alert alert-info mb-3" style="display:flex;justify-content:space-between;align-items:center;">
-  <div>🪙 Tienes <strong>{{ current_user.credits }} créditos</strong> disponibles.</div>
-  <div class="text-sm text-muted">Plan actual: <strong style="color:var(--accent2);">{{ current_user.plan.name if current_user.plan else 'Gratuito' }}</strong></div>
-</div>
+<!-- Modal selector de método de pago -->
+<div id="pay-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:32px;max-width:420px;width:90%;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+    <button onclick="cerrarModal()" style="position:absolute;top:14px;right:18px;background:none;border:none;color:var(--text-muted);font-size:1.4rem;cursor:pointer;line-height:1;">✕</button>
 
-<!-- Comparativa de planes -->
-<div class="card mb-3" style="background:rgba(99,102,241,0.05);border-color:rgba(99,102,241,0.2);">
-  <div class="card-title mb-2">📊 Comparativa de planes</div>
-  <div style="overflow-x:auto;">
-    <table style="width:100%;border-collapse:collapse;font-size:0.88rem;">
-      <thead>
-        <tr style="border-bottom:2px solid var(--border);">
-          <th style="text-align:left;padding:8px 12px;color:var(--text-muted);">Característica</th>
-          <th style="text-align:center;padding:8px 12px;">🆓 Gratuito</th>
-          <th style="text-align:center;padding:8px 12px;color:var(--accent);">⭐ Starter</th>
-          <th style="text-align:center;padding:8px 12px;color:var(--accent2);background:rgba(99,102,241,0.08);border-radius:4px;">🚀 Creator</th>
-          <th style="text-align:center;padding:8px 12px;color:#f59e0b;">🏢 Agency</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr style="border-bottom:1px solid var(--border);">
-          <td style="padding:10px 12px;font-weight:600;">💰 Precio mensual</td>
-          <td style="text-align:center;padding:10px 12px;">$0</td>
-          <td style="text-align:center;padding:10px 12px;color:var(--accent);font-weight:700;">$4.99</td>
-          <td style="text-align:center;padding:10px 12px;color:var(--accent2);font-weight:700;background:rgba(99,102,241,0.05);">$12.99</td>
-          <td style="text-align:center;padding:10px 12px;color:#f59e0b;font-weight:700;">$29.99</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--border);">
-          <td style="padding:10px 12px;font-weight:600;">🪙 Créditos/mes</td>
-          <td style="text-align:center;padding:10px 12px;">10 <span class="text-muted text-xs">(solo al registrarse)</span></td>
-          <td style="text-align:center;padding:10px 12px;font-weight:700;">150</td>
-          <td style="text-align:center;padding:10px 12px;font-weight:700;background:rgba(99,102,241,0.05);">600</td>
-          <td style="text-align:center;padding:10px 12px;font-weight:700;">2,500</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--border);">
-          <td style="padding:10px 12px;font-weight:600;">💾 Almacenamiento</td>
-          <td style="text-align:center;padding:10px 12px;">500 MB</td>
-          <td style="text-align:center;padding:10px 12px;">2 GB</td>
-          <td style="text-align:center;padding:10px 12px;background:rgba(99,102,241,0.05);">10 GB</td>
-          <td style="text-align:center;padding:10px 12px;">50 GB</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--border);">
-          <td style="padding:10px 12px;font-weight:600;">🤖 Peticiones IA/día</td>
-          <td style="text-align:center;padding:10px 12px;">15</td>
-          <td style="text-align:center;padding:10px 12px;">50</td>
-          <td style="text-align:center;padding:10px 12px;background:rgba(99,102,241,0.05);">200</td>
-          <td style="text-align:center;padding:10px 12px;">Ilimitadas</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--border);">
-          <td style="padding:10px 12px;font-weight:600;">🤖 Bots disponibles</td>
-          <td style="text-align:center;padding:10px 12px;">—</td>
-          <td style="text-align:center;padding:10px 12px;">Todos</td>
-          <td style="text-align:center;padding:10px 12px;background:rgba(99,102,241,0.05);">Todos + prioridad</td>
-          <td style="text-align:center;padding:10px 12px;">Todos + API</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--border);">
-          <td style="padding:10px 12px;font-weight:600;">📺 Canales YouTube</td>
-          <td style="text-align:center;padding:10px 12px;">—</td>
-          <td style="text-align:center;padding:10px 12px;">1</td>
-          <td style="text-align:center;padding:10px 12px;background:rgba(99,102,241,0.05);">5</td>
-          <td style="text-align:center;padding:10px 12px;">Ilimitados</td>
-        </tr>
-        <tr>
-          <td style="padding:10px 12px;font-weight:600;">🎧 Soporte</td>
-          <td style="text-align:center;padding:10px 12px;">Comunidad</td>
-          <td style="text-align:center;padding:10px 12px;">Email</td>
-          <td style="text-align:center;padding:10px 12px;background:rgba(99,102,241,0.05);">Prioritario</td>
-          <td style="text-align:center;padding:10px 12px;">24/7 Dedicado</td>
-        </tr>
-      </tbody>
-    </table>
+    <div style="text-align:center;margin-bottom:24px;">
+      <div style="font-size:2rem;margin-bottom:8px;">💳</div>
+      <div style="font-size:1.15rem;font-weight:800;margin-bottom:4px;">Elige cómo pagar</div>
+      <div id="modal-desc" style="color:var(--text-muted);font-size:0.88rem;"></div>
+    </div>
+
+    <!-- Opción PayPal -->
+    <form id="form-paypal" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="coupon" id="paypal-coupon" value="">
+      <button type="submit" style="width:100%;padding:16px;border-radius:12px;border:2px solid #0070ba;background:#003087;color:#fff;font-size:1rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px;transition:opacity .2s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+        <img src="https://www.paypalobjects.com/webstatic/icon/pp258.png" style="height:20px;" alt="PayPal">
+        Pagar con PayPal
+      </button>
+    </form>
+
+    <!-- Opción dLocal Go -->
+    <form id="form-dlocal" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="coupon" id="dlocal-coupon" value="">
+      <button type="submit" style="width:100%;padding:16px;border-radius:12px;border:2px solid #00b14f;background:#00b14f;color:#fff;font-size:1rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:opacity .2s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+        🌍 Pagar con tarjeta / banco local
+        <span style="font-size:0.75rem;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:20px;">dLocal Go</span>
+      </button>
+    </form>
+
+    <div style="text-align:center;margin-top:16px;">
+      <div style="font-size:0.78rem;color:var(--text-muted);">🔒 Pago seguro · Sin guardar datos de tarjeta · Cancela cuando quieras</div>
+    </div>
   </div>
 </div>
 
-<!-- Packs de créditos -->
-<h2 class="mb-2" style="font-size:1.1rem;font-weight:800;">⚡ Packs de créditos (pago único, sin suscripción)</h2>
+<!-- Saldo actual -->
+<div class="alert alert-info mb-3" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+  <div>🪙 Tienes <strong>{{ current_user.credits }} créditos</strong> disponibles.</div>
+  <div class="text-sm text-muted">Plan: <strong style="color:var(--accent2);">{{ current_user.plan.name if current_user.plan else 'Gratuito' }}</strong></div>
+</div>
+
+<!-- ── Packs de créditos ─────────────────────────────────────────────────── -->
+<h2 class="mb-2" style="font-size:1.1rem;font-weight:800;">⚡ Packs de créditos — pago único, sin suscripción</h2>
 <div class="grid-3 mb-3">
   {% for pack in packs %}
   <div class="plan-card {% if pack.popular %}popular{% endif %}">
     {% if pack.popular %}<span class="plan-popular-badge">⭐ Más popular</span>{% endif %}
     <div class="font-bold mb-1" style="font-size:1.1rem;">{{ pack.label }}</div>
     <div class="plan-price mb-1">${{ pack.price }}<span> USD</span></div>
-    <div class="text-accent font-bold mb-2">🪙 {{ pack.credits }} créditos</div>
-    <div class="text-xs text-muted mb-3">Sin suscripción — úsalos cuando quieras</div>
+    <div style="color:var(--accent);font-weight:700;margin-bottom:8px;">🪙 {{ pack.credits }} créditos</div>
+    <div class="text-xs text-muted mb-3">Úsalos cuando quieras, sin vencimiento</div>
 
-    <div class="form-group mb-2">
-      <input class="form-control coupon-field" placeholder="Cupón (opcional)">
+    <div class="form-group mb-3">
+      <input class="form-control coupon-field" placeholder="Cupón (opcional)" style="font-size:0.85rem;">
     </div>
 
-    <!-- PayPal -->
-    <form method="POST" action="{{ url_for('payments.buy_credits', pack_id=pack.id) }}" class="pay-form mb-1">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <input type="hidden" name="coupon" class="coupon-hidden">
-      <button type="submit" class="btn btn-primary w-full" style="justify-content:center;background:#003087;">
-        <img src="https://www.paypalobjects.com/webstatic/icon/pp258.png" style="height:16px;vertical-align:middle;margin-right:6px;" alt="">
-        Pagar con PayPal
-      </button>
-    </form>
-
-    <!-- dLocal Go -->
-    {% if dlocal_enabled %}
-    <form method="POST" action="{{ url_for('payments.dlocal_buy_credits', pack_id=pack.id) }}" class="pay-form">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <input type="hidden" name="coupon" class="coupon-hidden">
-      <button type="submit" class="btn w-full" style="justify-content:center;background:#00b14f;color:#fff;border:none;">
-        🌍 Pagar con dLocal (tarjeta/banco local)
-      </button>
-    </form>
-    {% endif %}
+    <button onclick="abrirModal('pack', '{{ pack.id }}', '{{ pack.label }} — {{ pack.credits }} créditos por ${{ pack.price }} USD', '{{ url_for('payments.buy_credits', pack_id=pack.id) }}', '{{ url_for('payments.dlocal_buy_credits', pack_id=pack.id) }}', this)"
+            class="btn btn-primary w-full" style="justify-content:center;">
+      💳 Comprar ahora
+    </button>
   </div>
   {% endfor %}
 </div>
 
 <div class="divider"></div>
 
-<!-- Planes de suscripción -->
+<!-- ── Suscripciones ─────────────────────────────────────────────────────── -->
 <h2 class="mb-1" style="font-size:1.1rem;font-weight:800;">📦 Suscripciones — créditos automáticos cada mes</h2>
-<p class="text-muted text-sm mb-3">Los créditos se renuevan el 1 de cada mes. Cancela cuando quieras.</p>
+<p class="text-muted text-sm mb-3">Los créditos se renuevan el 1 de cada mes. Cancela cuando quieras desde tu perfil.</p>
 <div class="grid-3 mb-3">
   {% for plan in plans %}
   {% set storage_map = {'starter':'2 GB','creator':'10 GB','agency':'50 GB'} %}
-  {% set ai_map = {'starter':'50/día','creator':'200/día','agency':'Ilimitadas'} %}
+  {% set ai_map      = {'starter':'50/día','creator':'200/día','agency':'Ilimitadas'} %}
   <div class="plan-card {% if plan.is_popular %}popular{% endif %}">
     {% if plan.is_popular %}<span class="plan-popular-badge">🚀 Más popular</span>{% endif %}
     <div class="font-bold mb-1" style="font-size:1.2rem;">{{ plan.name }}</div>
@@ -137,91 +89,93 @@
       <span class="badge badge-success">Ahorra {{ plan.annual_savings_percent() }}%</span>
       {% endif %}
     </div>
-    <div class="text-accent font-bold mb-1">🪙 {{ plan.credits_monthly }} créditos/mes</div>
-    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+    <div style="color:var(--accent);font-weight:700;margin-bottom:10px;">🪙 {{ plan.credits_monthly }} créditos/mes</div>
+    <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">
       <span class="badge badge-info">💾 {{ storage_map.get(plan.slug,'?') }}</span>
       <span class="badge badge-neutral">🤖 {{ ai_map.get(plan.slug,'?') }}</span>
     </div>
     {% for feature in plan.get_features() %}
     <div class="plan-feature">✓ {{ feature }}</div>
     {% endfor %}
+
     <div class="divider"></div>
 
-    <!-- Cupón plan -->
-    <div class="form-group mb-2">
-      <input class="form-control coupon-field" placeholder="Cupón (opcional)">
+    <div class="form-group mb-3">
+      <input class="form-control coupon-field" placeholder="Cupón (opcional)" style="font-size:0.85rem;">
     </div>
 
-    <!-- PayPal mensual/anual -->
-    <form method="POST" action="{{ url_for('payments.buy_plan', plan_id=plan.id, billing='monthly') }}" class="pay-form mb-1">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <input type="hidden" name="coupon" class="coupon-hidden">
-      <button type="submit" class="btn w-full mb-1" style="justify-content:center;background:#003087;color:#fff;border:none;">
-        <img src="https://www.paypalobjects.com/webstatic/icon/pp258.png" style="height:14px;vertical-align:middle;margin-right:5px;" alt="">
-        PayPal — ${{ "%.2f"|format(plan.price_monthly) }}/mes
-      </button>
-    </form>
-    <form method="POST" action="{{ url_for('payments.buy_plan', plan_id=plan.id, billing='annual') }}" class="pay-form mb-1">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <input type="hidden" name="coupon" class="coupon-hidden">
-      <button type="submit" class="btn btn-outline w-full mb-1" style="justify-content:center;">
-        <img src="https://www.paypalobjects.com/webstatic/icon/pp258.png" style="height:14px;vertical-align:middle;margin-right:5px;" alt="">
-        PayPal anual — ${{ "%.2f"|format(plan.price_annual) }}/año
-        {% if plan.annual_savings_percent() > 0 %}
-        <span class="badge badge-success">-{{ plan.annual_savings_percent() }}%</span>
-        {% endif %}
-      </button>
-    </form>
+    <!-- Mensual -->
+    <button onclick="abrirModal('plan_monthly', '{{ plan.id }}', 'Plan {{ plan.name }} — ${{ '%.2f'|format(plan.price_monthly) }}/mes', '{{ url_for('payments.buy_plan', plan_id=plan.id, billing='monthly') }}', '{{ url_for('payments.dlocal_buy_plan', plan_id=plan.id, billing='monthly') }}', this)"
+            class="btn btn-primary w-full mb-2" style="justify-content:center;">
+      💳 Suscribirse mensual — ${{ "%.2f"|format(plan.price_monthly) }}/mes
+    </button>
 
-    {% if dlocal_enabled %}
-    <!-- dLocal mensual/anual -->
-    <form method="POST" action="{{ url_for('payments.dlocal_buy_plan', plan_id=plan.id, billing='monthly') }}" class="pay-form mb-1">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <input type="hidden" name="coupon" class="coupon-hidden">
-      <button type="submit" class="btn w-full mb-1" style="justify-content:center;background:#00b14f;color:#fff;border:none;">
-        🌍 dLocal — ${{ "%.2f"|format(plan.price_monthly) }}/mes
-      </button>
-    </form>
-    <form method="POST" action="{{ url_for('payments.dlocal_buy_plan', plan_id=plan.id, billing='annual') }}" class="pay-form">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <input type="hidden" name="coupon" class="coupon-hidden">
-      <button type="submit" class="btn w-full" style="justify-content:center;background:#009b45;color:#fff;border:none;">
-        🌍 dLocal anual — ${{ "%.2f"|format(plan.price_annual) }}/año
-        {% if plan.annual_savings_percent() > 0 %}
-        <span class="badge" style="background:rgba(255,255,255,0.2);">-{{ plan.annual_savings_percent() }}%</span>
-        {% endif %}
-      </button>
-    </form>
-    {% endif %}
+    <!-- Anual -->
+    <button onclick="abrirModal('plan_annual', '{{ plan.id }}', 'Plan {{ plan.name }} — ${{ '%.2f'|format(plan.price_annual) }}/año', '{{ url_for('payments.buy_plan', plan_id=plan.id, billing='annual') }}', '{{ url_for('payments.dlocal_buy_plan', plan_id=plan.id, billing='annual') }}', this)"
+            class="btn btn-outline w-full" style="justify-content:center;">
+      💳 Suscribirse anual — ${{ "%.2f"|format(plan.price_annual) }}/año
+      {% if plan.annual_savings_percent() > 0 %}
+      <span class="badge badge-success">-{{ plan.annual_savings_percent() }}%</span>
+      {% endif %}
+    </button>
   </div>
   {% endfor %}
 </div>
 
-<div class="alert alert-info" style="font-size:0.85rem;">
-  🔒 Pagos seguros procesados por <strong>PayPal</strong> y <strong>dLocal Go</strong>.
-  No almacenamos datos de tarjetas. Cancela en cualquier momento sin penalización.<br><br>
-  🌍 <strong>dLocal Go</strong> acepta tarjetas locales, transferencias bancarias y más de 100 métodos de pago en toda América Latina, África y Asia.<br><br>
-  💡 <strong>¿Por qué somos más baratos?</strong> Usamos IA optimizada que reduce costos operativos,
-  lo que nos permite ofrecerte precios 3–5× menores que la competencia.
+<!-- Info de métodos de pago -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;gap:12px;align-items:flex-start;">
+    <img src="https://www.paypalobjects.com/webstatic/icon/pp258.png" style="height:28px;margin-top:4px;" alt="PayPal">
+    <div>
+      <div class="font-bold text-sm mb-1">PayPal</div>
+      <div class="text-xs text-muted">Tarjeta de crédito/débito internacional, cuenta PayPal. Disponible en 200+ países.</div>
+    </div>
+  </div>
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;gap:12px;align-items:flex-start;">
+    <span style="font-size:1.6rem;margin-top:2px;">🌍</span>
+    <div>
+      <div class="font-bold text-sm mb-1">dLocal Go</div>
+      <div class="text-xs text-muted">Tarjetas locales, transferencia bancaria, pagos en efectivo y más de 100 métodos en toda América Latina.</div>
+    </div>
+  </div>
+</div>
+
+<div class="alert" style="background:rgba(99,102,241,0.08);border-color:rgba(99,102,241,0.2);font-size:0.85rem;">
+  🔒 Pagos 100% seguros. No almacenamos datos de tarjetas. Los créditos se acreditan en segundos tras el pago.
 </div>
 
 <script>
-// Sincronizar campo cupón con los formularios ocultos de la misma tarjeta
-document.querySelectorAll('.plan-card, .plan-card > div').forEach(function(card) {
-  // Encontrar la tarjeta padre correcta
+const _csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+
+function abrirModal(tipo, id, descripcion, urlPaypal, urlDlocal, btn) {
+  // Capturar cupón de la tarjeta del botón clickeado
+  const card = btn.closest('.plan-card');
+  const coupon = card ? (card.querySelector('.coupon-field')?.value || '') : '';
+
+  document.getElementById('modal-desc').textContent = descripcion;
+  document.getElementById('form-paypal').action  = urlPaypal;
+  document.getElementById('form-dlocal').action  = urlDlocal;
+  document.getElementById('paypal-coupon').value = coupon;
+  document.getElementById('dlocal-coupon').value = coupon;
+
+  const modal = document.getElementById('pay-modal');
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function cerrarModal() {
+  document.getElementById('pay-modal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+// Cerrar al hacer clic fuera del cuadro
+document.getElementById('pay-modal').addEventListener('click', function(e) {
+  if (e.target === this) cerrarModal();
 });
-// Solución simple: por índice de tarjeta
-document.addEventListener('DOMContentLoaded', function() {
-  var cards = document.querySelectorAll('.plan-card');
-  cards.forEach(function(card) {
-    var couponField = card.querySelector('.coupon-field');
-    var hiddenFields = card.querySelectorAll('.coupon-hidden');
-    if (couponField) {
-      couponField.addEventListener('input', function() {
-        hiddenFields.forEach(function(h) { h.value = couponField.value; });
-      });
-    }
-  });
+
+// Cerrar con ESC
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') cerrarModal();
 });
 </script>
 
