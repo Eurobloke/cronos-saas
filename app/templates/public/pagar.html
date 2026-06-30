@@ -1,0 +1,231 @@
+{% extends 'public/base_public.html' %}
+{% block title %}Pagar — Cronos AI{% endblock %}
+{% block content %}
+
+<!-- Modal selector de método de pago -->
+<div id="pay-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.78);align-items:center;justify-content:center;">
+  <div style="background:#12122a;border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:36px;max-width:440px;width:92%;position:relative;box-shadow:0 24px 80px rgba(0,0,0,0.8);">
+    <button onclick="cerrarModal()" style="position:absolute;top:14px;right:18px;background:none;border:none;color:#777;font-size:1.5rem;cursor:pointer;">✕</button>
+    <div style="text-align:center;margin-bottom:26px;">
+      <div style="font-size:2rem;margin-bottom:8px;">💳</div>
+      <div style="font-size:1.15rem;font-weight:800;color:#fff;margin-bottom:6px;">Elige cómo pagar</div>
+      <div id="modal-desc" style="color:#aaa;font-size:0.88rem;line-height:1.5;padding:0 8px;"></div>
+    </div>
+    <button onclick="pagarCon('paypal')"
+      style="width:100%;padding:17px;border-radius:13px;border:2px solid #0070ba;background:#003087;color:#fff;font-size:1rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px;">
+      <img src="https://www.paypalobjects.com/webstatic/icon/pp258.png" style="height:20px;" alt="PayPal">
+      Pagar con PayPal
+      <span style="font-size:0.72rem;background:rgba(255,255,255,0.15);padding:2px 8px;border-radius:20px;">Internacional</span>
+    </button>
+    <button onclick="pagarCon('dlocal')"
+      style="width:100%;padding:17px;border-radius:13px;border:2px solid #00b14f;background:#00b14f;color:#fff;font-size:1rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">
+      🌍 Tarjeta / banco local
+      <span style="font-size:0.72rem;background:rgba(255,255,255,0.15);padding:2px 8px;border-radius:20px;">dLocal Go</span>
+    </button>
+    <div style="text-align:center;margin-top:16px;color:#555;font-size:0.78rem;">🔒 Pago seguro · Datos encriptados · No guardamos tarjetas</div>
+  </div>
+</div>
+
+<div style="max-width:1100px;margin:0 auto;padding:50px 20px 60px;">
+
+  <!-- Encabezado -->
+  <div style="text-align:center;margin-bottom:60px;">
+    <h1 style="font-size:2.4rem;font-weight:900;margin-bottom:12px;">Paga de forma segura</h1>
+    <p style="color:#aaa;font-size:1.05rem;max-width:520px;margin:0 auto;">
+      Tarjetas internacionales, banco local y más de 100 métodos de pago en toda América Latina.
+      Procesado por PayPal y dLocal Go.
+    </p>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       VENTA DE CÓDIGO FUENTE COMPLETO
+  ══════════════════════════════════════════════════════════════ -->
+  <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:18px;color:#fff;">💼 Sistema completo</h2>
+  <div style="background:linear-gradient(135deg,#1a1030,#0d1b2a);border:2px solid #6366f1;border-radius:20px;padding:36px;margin-bottom:48px;position:relative;overflow:hidden;">
+    <div style="position:absolute;top:0;right:0;background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:10px 22px;border-radius:0 20px 0 14px;font-size:0.78rem;font-weight:800;color:#fff;">OFERTA ÚNICA</div>
+    <div style="display:flex;align-items:flex-start;gap:28px;flex-wrap:wrap;">
+      <div style="font-size:3rem;">🤖</div>
+      <div style="flex:1;min-width:240px;">
+        <h2 style="font-size:1.5rem;font-weight:900;margin-bottom:10px;color:#fff;">Código fuente Cronos AI — Sistema completo</h2>
+        <p style="color:#bbb;margin-bottom:16px;line-height:1.7;font-size:0.9rem;">
+          Panel SaaS + 8 bots de automatización de contenido para redes sociales (FB + YouTube).
+          Sistema multi-usuario con pagos, scheduler automático, IA y despliegue en la nube.
+        </p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:20px;font-size:0.85rem;color:#ccc;">
+          <div>✅ Panel web SaaS multi-usuario</div>
+          <div>✅ 8 bots de contenido completos</div>
+          <div>✅ PayPal + dLocal Go integrados</div>
+          <div>✅ Scheduler automático con IA</div>
+          <div>✅ Base de datos PostgreSQL</div>
+          <div>✅ Despliegue listo en Railway</div>
+          <div>✅ Código fuente 100% tuyo</div>
+          <div>✅ Soporte WhatsApp 30 días</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
+          <div>
+            <div style="font-size:2.6rem;font-weight:900;color:#6366f1;">$3,800 <span style="font-size:1rem;color:#888;font-weight:400;">USD</span></div>
+            <div style="color:#888;font-size:0.8rem;">Pago único · Licencia comercial · Sin mensualidades</div>
+          </div>
+          <button onclick="abrirModal('Código Fuente Cronos AI (sistema completo) — $3,800 USD', '/payments/buy-source/paypal', '/payments/buy-source/dlocal')"
+            style="padding:15px 28px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:800;cursor:pointer;">
+            💳 Comprar ahora
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       BOTS INDIVIDUALES
+  ══════════════════════════════════════════════════════════════ -->
+  <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:6px;color:#fff;">🤖 Bots individuales</h2>
+  <p style="color:#888;font-size:0.88rem;margin-bottom:22px;">Cada bot incluye código fuente completo + guía de instalación + soporte por WhatsApp 15 días.</p>
+
+  {% set bots = [
+    {'icon':'♈','name':'Horóscopo Bot','desc':'Genera y publica los 12 signos del zodiaco cada día. Voz IA, imágenes generadas, FB + YouTube automático.','precio':1200,'slug':'horoscopo',
+     'req':['PC con Windows 10/11','Python 3.11 o superior','FFmpeg instalado','Cuenta de Facebook (página de negocio)','Cuenta de YouTube / Google','Conexión a internet estable (mínimo 10 Mbps)']},
+    {'icon':'💪','name':'Motivación Bot','desc':'Videos de frases y reflexiones motivacionales diarias. Voz narrada con IA, subtítulos ASS, FB + YouTube.','precio':1000,'slug':'motivacion',
+     'req':['PC con Windows 10/11','Python 3.11 o superior','FFmpeg instalado','Cuenta de Facebook (página de negocio)','Cuenta de YouTube / Google','Conexión a internet estable']},
+    {'icon':'✝️','name':'Cristiano Bot','desc':'Foto devocional + short + video largo cada día con versículos bíblicos, voz y música. FB + YouTube.','precio':1200,'slug':'cristiano',
+     'req':['PC con Windows 10/11','Python 3.11 o superior','FFmpeg instalado','Playwright (Chrome automatizado — se instala con el bot)','Cuenta de Facebook activa con sesión guardada','Cuenta de YouTube / Google','Conexión a internet estable']},
+    {'icon':'📰','name':'Noticias RD Bot','desc':'Scraper RSS de noticias dominicanas, miniaturas estilo CNN, foto presentador circular. FB + YouTube.','precio':1500,'slug':'noticias',
+     'req':['PC con Windows 10/11','Python 3.11 o superior','FFmpeg + Pillow (procesado de imágenes)','Foto del presentador del canal (PNG sin fondo)','Cuenta de Facebook (página de negocio)','Cuenta de YouTube / Google','Conexión a internet estable']},
+    {'icon':'🎵','name':'Music Video Bot','desc':'Videos musicales con clips de Pexels + letra sincronizada. Descarga cruzada FB↔YT sin derechos de autor.','precio':1800,'slug':'music_video',
+     'req':['PC con Windows 10/11','Python 3.11 o superior','FFmpeg instalado','API Key gratuita de Pexels (pexels.com/api)','Archivos MP3 de las canciones','Cuenta de Facebook (página de negocio)','Cuenta de YouTube / Google']},
+    {'icon':'🚗','name':'Vehículos Bot','desc':'Videos de 15 min por vehículo con narración IA, subtítulos y música. Categorías: antiguo, clásico, moderno.','precio':1400,'slug':'vehiculos',
+     'req':['PC con Windows 10/11','Python 3.11 o superior','FFmpeg instalado','Edge-TTS (voz — se instala automáticamente)','Conexión a internet para buscar imágenes','Cuenta de YouTube / Google']},
+    {'icon':'💿','name':'DistroKid Bot','desc':'Sube álbumes WAV a DistroKid automáticamente con portadas 3000×3000 generadas por Google Flow.','precio':2000,'slug':'distrokid',
+     'req':['PC con Windows 10/11','Python 3.11 o superior','Playwright (Chrome automatizado)','Cuenta DistroKid activa (≈$22/año — a cargo del cliente)','Cuenta de Google para Flow (generación de portadas)','Archivos WAV de alta calidad (44100 Hz, 16-bit mínimo)']},
+    {'icon':'🤖','name':'Avatar Livestream','desc':'Foto animada con lip sync en tiempo real. La IA ve la pantalla, responde el chat en vivo. OBS listo.','precio':2500,'slug':'avatar',
+     'req':['PC con Windows 10/11 (8 GB RAM mínimo)','Python 3.11 o superior','OBS Studio instalado','Foto del presentador (fondo blanco o verde)','API Key de Claude / Anthropic (IA que responde el chat)','Cuenta de YouTube o Twitch para el stream','Conexión a internet de alta velocidad (25 Mbps+)']},
+  ] %}
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:20px;margin-bottom:52px;">
+    {% for bot in bots %}
+    <div style="background:#0f0f1a;border:1px solid rgba(255,255,255,0.09);border-radius:16px;padding:24px;display:flex;flex-direction:column;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span style="font-size:2rem;">{{ bot.icon }}</span>
+        <div>
+          <div style="font-weight:800;color:#fff;font-size:1rem;">{{ bot.name }}</div>
+          <div style="color:#6366f1;font-weight:700;font-size:1.1rem;">${{ '{:,}'.format(bot.precio) }} <span style="color:#666;font-size:0.8rem;font-weight:400;">USD</span></div>
+        </div>
+      </div>
+      <p style="color:#999;font-size:0.85rem;line-height:1.6;margin-bottom:12px;">{{ bot.desc }}</p>
+
+      <!-- Requisitos colapsables -->
+      <details style="margin-bottom:14px;cursor:pointer;">
+        <summary style="color:#6366f1;font-size:0.82rem;font-weight:700;list-style:none;display:flex;align-items:center;gap:5px;user-select:none;">
+          <span class="req-arrow">▶</span> Ver requisitos del sistema
+        </summary>
+        <div style="margin-top:10px;background:rgba(255,255,255,0.04);border-radius:8px;padding:12px;">
+          {% for r in bot.req %}
+          <div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:6px;font-size:0.8rem;color:#bbb;line-height:1.4;">
+            <span style="color:#6366f1;flex-shrink:0;">•</span>{{ r }}
+          </div>
+          {% endfor %}
+        </div>
+      </details>
+
+      <div style="font-size:0.78rem;color:#555;margin-bottom:14px;flex:1;">✅ Código fuente · ✅ Guía de instalación · ✅ Soporte WhatsApp 15 días</div>
+      <button onclick="abrirModal('{{ bot.name }} — ${{ '{:,}'.format(bot.precio) }} USD', '/payments/buy-bot/{{ bot.slug }}/paypal', '/payments/buy-bot/{{ bot.slug }}/dlocal')"
+        style="width:100%;padding:12px;background:rgba(99,102,241,0.15);color:#6366f1;border:1px solid rgba(99,102,241,0.35);border-radius:10px;font-weight:700;cursor:pointer;font-size:0.9rem;">
+        💳 Comprar este bot
+      </button>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       PACKS DE CRÉDITOS (SUSCRIPCIÓN / PAGO ÚNICO)
+  ══════════════════════════════════════════════════════════════ -->
+  <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:6px;color:#fff;">⚡ Packs de créditos — usar los bots en la nube</h2>
+  <p style="color:#888;font-size:0.88rem;margin-bottom:22px;">No necesitas instalar nada. Usa los bots directamente desde el panel web.</p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-bottom:48px;">
+    {% set packs = [
+      {'id':'pack_50',  'credits':50,   'price':4.99,  'label':'Pack Básico',  'popular':False},
+      {'id':'pack_150', 'credits':150,  'price':12.99, 'label':'Pack Creator', 'popular':True},
+      {'id':'pack_500', 'credits':500,  'price':34.99, 'label':'Pack Agency',  'popular':False},
+    ] %}
+    {% for pack in packs %}
+    <div style="background:#0f0f1a;border:2px solid {% if pack.popular %}#6366f1{% else %}rgba(255,255,255,0.08){% endif %};border-radius:14px;padding:22px;position:relative;">
+      {% if pack.popular %}<div style="position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:#6366f1;color:#fff;padding:2px 14px;border-radius:20px;font-size:0.72rem;font-weight:700;white-space:nowrap;">⭐ Más popular</div>{% endif %}
+      <div style="font-weight:800;color:#fff;margin-bottom:6px;">{{ pack.label }}</div>
+      <div style="font-size:1.8rem;font-weight:900;color:#6366f1;margin-bottom:4px;">${{ pack.price }} <span style="font-size:0.8rem;color:#888;font-weight:400;">USD</span></div>
+      <div style="color:#aaa;font-size:0.85rem;margin-bottom:16px;">🪙 {{ pack.credits }} créditos sin vencimiento</div>
+      <button onclick="abrirModal('{{ pack.label }} — {{ pack.credits }} créditos por ${{ pack.price }} USD', '/payments/buy-credits/{{ pack.id }}', '/payments/dlocal/buy-credits/{{ pack.id }}')"
+        style="width:100%;padding:11px;background:{% if pack.popular %}#6366f1{% else %}rgba(99,102,241,0.12){% endif %};color:#fff;border:{% if pack.popular %}none{% else %}1px solid rgba(99,102,241,0.3){% endif %};border-radius:9px;font-weight:700;cursor:pointer;font-size:0.88rem;">
+        💳 Comprar
+      </button>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Suscripciones -->
+  <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:6px;color:#fff;">📦 Suscripciones — créditos mensuales automáticos</h2>
+  <p style="color:#888;font-size:0.88rem;margin-bottom:22px;">Créditos que se renuevan cada mes. Cancela cuando quieras.</p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;margin-bottom:52px;">
+    {% for plan in plans %}
+    <div style="background:#0f0f1a;border:2px solid {% if plan.is_popular %}#6366f1{% else %}rgba(255,255,255,0.08){% endif %};border-radius:16px;padding:24px;position:relative;">
+      {% if plan.is_popular %}<div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:#6366f1;color:#fff;padding:3px 14px;border-radius:20px;font-size:0.72rem;font-weight:700;white-space:nowrap;">🚀 Más popular</div>{% endif %}
+      <div style="font-size:1.1rem;font-weight:900;color:#fff;margin-bottom:4px;">{{ plan.name }}</div>
+      <div style="color:#888;font-size:0.82rem;margin-bottom:12px;">{{ plan.description }}</div>
+      <div style="font-size:1.8rem;font-weight:900;color:#6366f1;margin-bottom:2px;">${{ "%.2f"|format(plan.price_monthly) }}<span style="font-size:0.8rem;color:#888;font-weight:400;">/mes</span></div>
+      <div style="color:#aaa;font-size:0.78rem;margin-bottom:12px;">🪙 {{ plan.credits_monthly }} créditos/mes</div>
+      {% for feature in plan.get_features() %}
+      <div style="font-size:0.82rem;color:#bbb;margin-bottom:4px;"><span style="color:#22c55e;">✓</span> {{ feature }}</div>
+      {% endfor %}
+      <div style="margin-top:16px;display:flex;flex-direction:column;gap:8px;">
+        <button onclick="abrirModal('Plan {{ plan.name }} mensual — ${{ '%.2f'|format(plan.price_monthly) }}/mes', '/payments/buy-plan/{{ plan.id }}/monthly', '/payments/dlocal/buy-plan/{{ plan.id }}/monthly')"
+          style="padding:11px;background:#6366f1;color:#fff;border:none;border-radius:9px;font-weight:700;cursor:pointer;font-size:0.88rem;">💳 Mensual — ${{ "%.2f"|format(plan.price_monthly) }}/mes</button>
+        <button onclick="abrirModal('Plan {{ plan.name }} anual — ${{ '%.2f'|format(plan.price_annual) }}/año', '/payments/buy-plan/{{ plan.id }}/annual', '/payments/dlocal/buy-plan/{{ plan.id }}/annual')"
+          style="padding:11px;background:transparent;color:#6366f1;border:1px solid #6366f1;border-radius:9px;font-weight:700;cursor:pointer;font-size:0.88rem;">💳 Anual — ${{ "%.2f"|format(plan.price_annual) }}/año {% if plan.annual_savings_percent() > 0 %}<span style="color:#22c55e;font-size:0.75rem;">(-{{ plan.annual_savings_percent() }}%)</span>{% endif %}</button>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Métodos de pago + contacto -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:32px;">
+    <div style="background:#0f0f1a;border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:16px;display:flex;gap:12px;">
+      <img src="https://www.paypalobjects.com/webstatic/icon/pp258.png" style="height:24px;object-fit:contain;margin-top:2px;" alt="PayPal">
+      <div><div style="font-weight:700;color:#fff;font-size:0.88rem;">PayPal</div><div style="color:#777;font-size:0.78rem;">Tarjeta internacional, cuenta PayPal. 200+ países.</div></div>
+    </div>
+    <div style="background:#0f0f1a;border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:16px;display:flex;gap:12px;">
+      <span style="font-size:1.4rem;margin-top:2px;">🌍</span>
+      <div><div style="font-weight:700;color:#fff;font-size:0.88rem;">dLocal Go</div><div style="color:#777;font-size:0.78rem;">Tarjetas locales, banco, efectivo — 100+ métodos en LATAM.</div></div>
+    </div>
+  </div>
+
+  <div style="text-align:center;color:#555;font-size:0.82rem;">
+    🔒 Pagos seguros · No guardamos datos de tarjeta · ¿Preguntas? robertomartem@gmail.com · WhatsApp +1 (809) 647-5756
+  </div>
+</div>
+
+<script>
+let _urlPaypal = '', _urlDlocal = '';
+
+function abrirModal(descripcion, urlPaypal, urlDlocal) {
+  _urlPaypal = urlPaypal;
+  _urlDlocal = urlDlocal;
+  document.getElementById('modal-desc').textContent = descripcion;
+  document.getElementById('pay-modal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function pagarCon(metodo) {
+  window.location.href = metodo === 'paypal' ? _urlPaypal : _urlDlocal;
+}
+
+function cerrarModal() {
+  document.getElementById('pay-modal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+document.getElementById('pay-modal').addEventListener('click', function(e) {
+  if (e.target === this) cerrarModal();
+});
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') cerrarModal();
+});
+</script>
+{% endblock %}

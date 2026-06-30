@@ -38,3 +38,11 @@ def terms():
 @public_bp.route('/reembolsos')
 def refunds():
     return render_template('public/refunds.html')
+
+
+@public_bp.route('/pagar')
+def pagar():
+    """Link de pagos público — no requiere login."""
+    from app.models.plan import Plan
+    plans = Plan.query.filter_by(is_active=True).order_by(Plan.sort_order).all()
+    return render_template('public/pagar.html', plans=plans)

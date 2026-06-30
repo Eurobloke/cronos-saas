@@ -608,6 +608,141 @@ def _complete_dlocal_payment(payment: Payment, data: dict):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# ─── Venta de código fuente y bots individuales ──────────────────────────
+# ═══════════════════════════════════════════════════════════════════════════
+
+BOTS_VENTA = {
+    'horoscopo':   {'name': 'Horóscopo Bot',      'price': 1200.0},
+    'motivacion':  {'name': 'Motivación Bot',      'price': 1000.0},
+    'cristiano':   {'name': 'Cristiano Bot',       'price': 1200.0},
+    'noticias':    {'name': 'Noticias RD Bot',     'price': 1500.0},
+    'music_video': {'name': 'Music Video Bot',     'price': 1800.0},
+    'vehiculos':   {'name': 'Vehículos Bot',       'price': 1400.0},
+    'distrokid':   {'name': 'DistroKid Bot',       'price': 2000.0},
+    'avatar':      {'name': 'Avatar Livestream',   'price': 2500.0},
+}
+
+CODIGO_FUENTE = {'name': 'Código Fuente Cronos AI (sistema completo)', 'price': 3800.0}
+
+
+def _crear_pago_especial(nombre, precio, tipo, via):
+    """Crea un pago único para bot o código fuente y redirige al procesador."""
+    from flask_login import current_user as cu
+    if not cu.is_authenticated:
+        from flask import url_for as uf
+        return redirect(uf('auth.login') + f'?next=/pagar')
+
+    payment = Payment(
+        user_id=cu.id,
+        amount=precio,
+        type=tipo,
+        credits_granted=0,
+        description=nombre,
+        status='pending',
+    )
+    payment.generate_invoice_number()
+    db.session.add(payment)
+    db.session.commit()
+
+    app_url = current_app.config['APP_URL']
+    if via == 'paypal':
+        try:
+            order_data = paypal.create_order(
+                amount=precio,
+                description=nombre,
+                return_url=f'{app_url}/payments/special/capture?pid={payment.id}',
+                cancel_url=f'{app_url}/payments/cancel',
+            )
+            payment.paypal_order_id = order_data['order_id']
+            db.session.commit()
+            return redirect(order_data['approve_url'])
+        except Exception as e:
+            current_app.logger.error(f'PayPal especial error: {e}')
+            payment.status = 'failed'
+            db.session.commit()
+            flash('Error al conectar con PayPal. Intenta con dLocal.', 'danger')
+            return redirect('/pagar')
+    else:  # dlocal
+        try:
+            result = dlocal.create_payment(
+                amount=precio,
+                currency='USD',
+                description=nombre,
+                success_url=f'{app_url}/payments/dlocal/success?payment_id={payment.id}',
+                back_url=f'{app_url}/payments/cancel',
+                notification_url=f'{app_url}/payments/dlocal/webhook',
+                order_id=str(payment.id),
+            )
+            payment.paypal_order_id = result['payment_id']
+            db.session.commit()
+            return redirect(result['redirect_url'])
+        except Exception as e:
+            current_app.logger.error(f'dLocal especial error: {e}')
+            payment.status = 'failed'
+            db.session.commit()
+            flash('Error al conectar con dLocal. Intenta con PayPal.', 'danger')
+            return redirect('/pagar')
+
+
+@payments_bp.route('/buy-bot/<slug>/<via>')
+@login_required
+def buy_bot(slug, via):
+    if slug not in BOTS_VENTA or via not in ('paypal', 'dlocal'):
+        abort(404)
+    bot = BOTS_VENTA[slug]
+    return _crear_pago_especial(f'{bot["name"]} — código fuente', bot['price'], f'bot_{slug}', via)
+
+
+@payments_bp.route('/buy-source/<via>')
+@login_required
+def buy_source(via):
+    if via not in ('paypal', 'dlocal'):
+        abort(404)
+    return _crear_pago_especial(CODIGO_FUENTE['name'], CODIGO_FUENTE['price'], 'codigo_fuente', via)
+
+
+@payments_bp.route('/special/capture')
+@login_required
+def special_capture():
+    """Captura el pago PayPal para bot/código fuente."""
+    order_id = request.args.get('token')
+    pid = request.args.get('pid', type=int)
+    if not order_id or not pid:
+        flash('Pago cancelado.', 'warning')
+        return redirect('/pagar')
+
+    payment = Payment.query.filter_by(paypal_order_id=order_id, id=pid,
+                                       user_id=current_user.id, status='pending').first()
+    if not payment:
+        flash('Pago no encontrado.', 'danger')
+        return redirect('/pagar')
+
+    try:
+        result = paypal.capture_order(order_id)
+        cap = result.get('capture', {})
+        if result.get('order_status') == 'COMPLETED' and cap.get('status') == 'COMPLETED':
+            payment.status = 'completed'
+            payment.paypal_capture_id = cap.get('capture_id')
+            payment.paypal_payer_email = cap.get('payer_email')
+            payment.completed_at = datetime.now(timezone.utc)
+            db.session.commit()
+            email_service.send_purchase_confirmation(current_user, payment)
+            flash(f'✅ ¡Pago de ${payment.amount:.2f} USD completado! Recibirás acceso por email en breve.', 'success')
+            return redirect(url_for('payments.success', payment_id=payment.id))
+        else:
+            payment.status = 'failed'
+            db.session.commit()
+            flash('El pago no pudo ser procesado.', 'danger')
+    except Exception as e:
+        current_app.logger.error(f'PayPal special capture error: {e}')
+        payment.status = 'failed'
+        db.session.commit()
+        flash('Error al procesar el pago.', 'danger')
+
+    return redirect('/pagar')
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 
 @payments_bp.route('/validate-coupon', methods=['POST'])
 @login_required
