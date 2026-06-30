@@ -47,4 +47,8 @@ DEFAULT_SERVICES = [
     {'name': 'Exportación',                  'slug': 'exportacion',    'credit_cost': 2,  'category': 'video',       'icon': '📦', 'bot_script': None},
     {'name': 'Publicación en YouTube',       'slug': 'pub_youtube',    'credit_cost': 5,  'category': 'publicacion', 'icon': '▶️', 'bot_script': 'horoscopo_bot/7_subir_youtube.py'},
     {'name': 'Publicación en Facebook',      'slug': 'pub_facebook',   'credit_cost': 3,  'category': 'publicacion', 'icon': '👍', 'bot_script': 'motivacion_bot/3_publicar_facebook.py'},
+    # ── Bots de nichos adicionales ──────────────────────────────────────────
+    {'name': 'Music Video Completo',         'slug': 'music_video_completo', 'credit_cost': 15, 'category': 'musica',   'icon': '🎵', 'bot_script': 'music_video_bot/video_bot.py'},
+    {'name': 'Vehículos Completo',           'slug': 'vehiculos_completo',   'credit_cost': 10, 'category': 'vehiculos','icon': '🚗', 'bot_script': 'vehiculos_bot/main.py'},
+    {'name': 'DistroKid — Subir Álbum',      'slug': 'distrokid_completo',   'credit_cost': 20, 'category': 'musica',   'icon': '💿', 'bot_script': 'proyecto_album_videos/distrokid_bot/distrokid_bot.py'},
 ]

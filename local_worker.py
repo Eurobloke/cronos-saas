@@ -84,6 +84,15 @@ def _ejecutar_job(app, job_id, service_slug, params):
     elif 'cristiano' in service_slug:
         from app.services.bots.cristiano_runner import run_pipeline_async
         run_pipeline_async(app, job_id, params)
+    elif 'music_video' in service_slug:
+        from app.services.bots.music_video_runner import run_pipeline_async
+        run_pipeline_async(app, job_id, params)
+    elif 'vehiculos' in service_slug:
+        from app.services.bots.vehiculos_runner import run_pipeline_async
+        run_pipeline_async(app, job_id, params)
+    elif 'distrokid' in service_slug:
+        from app.services.bots.distrokid_runner import run_pipeline_async
+        run_pipeline_async(app, job_id, params)
     else:
         from app.services.bot_runner import run_job_async
         run_job_async(app, job_id)
