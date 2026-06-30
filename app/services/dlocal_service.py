@@ -16,8 +16,11 @@ class DLocalService:
 
     def _headers(self) -> dict:
         api_key = current_app.config.get('DLOCAL_API_KEY', '')
+        secret_key = current_app.config.get('DLOCAL_SECRET_KEY', '')
+        # dLocal Go requiere: Bearer API_KEY:SECRET_KEY
+        token = f'{api_key}:{secret_key}' if secret_key else api_key
         return {
-            'Authorization': f'Bearer {api_key}',
+            'Authorization': f'Bearer {token}',
             'Content-Type': 'application/json',
             'Accept': 'application/json',
         }
