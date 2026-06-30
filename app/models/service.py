@@ -43,6 +43,7 @@ DEFAULT_SERVICES = [
     {'name': 'Horoscopo Completo (12 signos)','slug': 'horoscopo_completo','credit_cost': 20,'category': 'horoscopo',  'icon': '♈', 'bot_script': 'horoscopo_bot/MENU.py'},
     {'name': 'Motivacion Completo',          'slug': 'motivacion_completo','credit_cost': 15,'category': 'motivacion', 'icon': '💪', 'bot_script': 'motivacion_bot/MENU.py'},
     {'name': 'Noticias RD Completo',         'slug': 'noticias_rd_completo','credit_cost':10,'category': 'noticias',   'icon': '📰', 'bot_script': 'noticias_rd_bot/MENU.py'},
+    {'name': 'Cristiano Completo',           'slug': 'cristiano_completo', 'credit_cost':15,'category': 'cristiano',  'icon': '✝️', 'bot_script': 'cristiano_bot/MENU.py'},
     {'name': 'Exportación',                  'slug': 'exportacion',    'credit_cost': 2,  'category': 'video',       'icon': '📦', 'bot_script': None},
     {'name': 'Publicación en YouTube',       'slug': 'pub_youtube',    'credit_cost': 5,  'category': 'publicacion', 'icon': '▶️', 'bot_script': 'horoscopo_bot/7_subir_youtube.py'},
     {'name': 'Publicación en Facebook',      'slug': 'pub_facebook',   'credit_cost': 3,  'category': 'publicacion', 'icon': '👍', 'bot_script': 'motivacion_bot/3_publicar_facebook.py'},
