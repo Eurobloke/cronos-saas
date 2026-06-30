@@ -486,54 +486,84 @@ def dlocal_success():
 def dlocal_webhook():
     """
     dLocal llama aquí cuando un pago se completa (notificación asíncrona).
-    Este endpoint es la fuente de verdad — no depende de que el usuario
-    regrese al sitio.
+    Es la fuente de verdad — no depende de que el usuario regrese al sitio.
+    dLocal reintenta hasta 72h si respondemos algo que no sea 2xx.
     """
+    import json as _json
+
     body = request.get_data()
-    signature = request.headers.get('X-DLocal-Signature', '')
+
+    # dLocal puede enviar la firma en distintos headers — probamos los tres
+    signature = (
+        request.headers.get('X-DLocal-Signature') or
+        request.headers.get('X-Signature') or
+        request.headers.get('Signature') or ''
+    )
+
+    current_app.logger.info(
+        f'[dLocal Webhook] Recibido: {len(body)} bytes | sig={signature[:30] if signature else "NONE"}'
+    )
 
     if not dlocal.verify_signature(body, signature):
-        current_app.logger.warning('[dLocal Webhook] Firma inválida — ignorado')
-        return jsonify({'ok': False}), 400
+        current_app.logger.warning('[dLocal Webhook] Firma inválida — rechazado')
+        return jsonify({'ok': False, 'error': 'invalid_signature'}), 400
 
     try:
-        import json as _json
         event = _json.loads(body) if body else {}
-        status = event.get('status', '').upper()
+    except Exception:
+        current_app.logger.error('[dLocal Webhook] Body no es JSON válido')
+        return jsonify({'ok': False, 'error': 'invalid_json'}), 400
 
-        # Solo procesamos pagos confirmados
-        if status not in ('PAID', 'COMPLETED', 'APPROVED'):
-            return jsonify({'ok': True, 'skipped': status})
+    current_app.logger.info(f'[dLocal Webhook] Evento: {_json.dumps(event)[:500]}')
 
-        # Buscar pago por ID externo o ID de dLocal
-        dlocal_id = event.get('id') or event.get('payment_id', '')
-        external_id = event.get('external_id', '')
+    status = event.get('status', '').upper()
+
+    # Solo procesamos pagos confirmados; dLocal usa distintos nombres
+    ESTADOS_OK = {'PAID', 'COMPLETED', 'APPROVED', 'SUCCESS', 'CONFIRMED'}
+    if status not in ESTADOS_OK:
+        current_app.logger.info(f'[dLocal Webhook] Estado ignorado: {status}')
+        return jsonify({'ok': True, 'skipped': status})
+
+    try:
+        # Buscar pago por múltiples campos que puede enviar dLocal
+        dlocal_id   = event.get('id') or event.get('payment_id') or ''
+        external_id = event.get('external_id') or event.get('order_id') or ''
 
         payment = None
         if dlocal_id:
-            payment = Payment.query.filter_by(paypal_order_id=dlocal_id).first()
-        if not payment and external_id:
-            payment = Payment.query.get(int(external_id)) if external_id.isdigit() else None
+            payment = Payment.query.filter_by(paypal_order_id=str(dlocal_id)).first()
+        if not payment and external_id and str(external_id).isdigit():
+            payment = Payment.query.get(int(external_id))
 
         if not payment:
-            current_app.logger.info(f'[dLocal Webhook] Pago no encontrado: id={dlocal_id}')
-            return jsonify({'ok': True, 'msg': 'pago no encontrado'})
+            current_app.logger.warning(
+                f'[dLocal Webhook] Pago no encontrado — dlocal_id={dlocal_id} external={external_id}'
+            )
+            # Devolvemos 200 para que dLocal no reintente indefinidamente
+            return jsonify({'ok': True, 'msg': 'pago_no_encontrado'})
 
         if payment.status == 'completed':
-            return jsonify({'ok': True, 'msg': 'ya procesado'})
+            current_app.logger.info(f'[dLocal Webhook] Pago #{payment.id} ya estaba completado — ok')
+            return jsonify({'ok': True, 'msg': 'ya_procesado'})
 
         _complete_dlocal_payment(payment, event)
         db.session.commit()
 
-        email_service.send_purchase_confirmation(payment.user, payment)
+        try:
+            email_service.send_purchase_confirmation(payment.user, payment)
+        except Exception as mail_err:
+            current_app.logger.warning(f'[dLocal Webhook] Error enviando email: {mail_err}')
+
         current_app.logger.info(
-            f'[dLocal Webhook] Pago #{payment.id} completado. '
-            f'{payment.credits_granted} créditos → {payment.user.email}'
+            f'[dLocal Webhook] ✅ Pago #{payment.id} completado — '
+            f'${payment.amount} USD — {payment.credits_granted} créditos → {payment.user.email}'
         )
 
     except Exception as e:
-        current_app.logger.error(f'[dLocal Webhook] Error: {e}')
+        import traceback
+        current_app.logger.error(f'[dLocal Webhook] Error procesando: {e}\n{traceback.format_exc()}')
         db.session.rollback()
+        # 500 → dLocal reintentará (correcto para errores reales del servidor)
         return jsonify({'ok': False, 'error': str(e)}), 500
 
     return jsonify({'ok': True})

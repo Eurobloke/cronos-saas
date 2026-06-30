@@ -83,18 +83,31 @@ class DLocalService:
     def verify_signature(self, payload: bytes, signature: str) -> bool:
         """
         Verifica que el webhook viene de dLocal Go.
-        Signature = HMAC-SHA256(secret_key, payload).
+        Firma = HMAC-SHA256(secret_key, payload) — hex o con prefijo 'sha256='.
+        Si no hay secret configurado, acepta todo (modo dev).
         """
-        if not self._secret():
-            return True  # Sin secret configurado, aceptar (dev mode)
+        secret = self._secret()
+        if not secret:
+            current_app.logger.warning('[dLocal] Sin DLOCAL_SECRET_KEY — webhook aceptado sin verificar')
+            return True
         try:
+            # Quitar prefijo 'sha256=' si lo trae dLocal
+            sig = signature.removeprefix('sha256=').strip()
+
             expected = hmac.new(
-                self._secret().encode('utf-8'),
+                secret.encode('utf-8'),
                 payload,
                 hashlib.sha256,
             ).hexdigest()
-            return hmac.compare_digest(expected, signature)
-        except Exception:
+
+            ok = hmac.compare_digest(expected, sig)
+            if not ok:
+                current_app.logger.warning(
+                    f'[dLocal] Firma inválida. recibida={sig[:20]}... esperada={expected[:20]}...'
+                )
+            return ok
+        except Exception as e:
+            current_app.logger.error(f'[dLocal] Error verificando firma: {e}')
             return False
 
     # ─── Reembolso ────────────────────────────────────────────────────────────
