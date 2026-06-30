@@ -649,21 +649,10 @@ def bot_run_now(slug):
         flash('Error al descontar créditos.', 'danger')
         return redirect(url_for('dashboard.bot_config', slug=slug, slot=slot))
 
+    job.status = 'queued'
     db.session.commit()
 
-    if slug == 'motivacion':
-        from app.services.bots.motivacion_runner import run_pipeline_async
-        run_pipeline_async(current_app._get_current_object(), job.id, params)
-    elif slug == 'noticias':
-        from app.services.bots.noticias_runner import run_pipeline_async
-        run_pipeline_async(current_app._get_current_object(), job.id, params)
-    elif slug == 'cristiano':
-        from app.services.bots.cristiano_runner import run_pipeline_async
-        run_pipeline_async(current_app._get_current_object(), job.id, params)
-    else:
-        run_job_async(current_app._get_current_object(), job.id)
-
-    flash(f'✅ {bot["name"]} iniciado — Job #{job.id}.', 'success')
+    flash(f'✅ {bot["name"]} en cola — Job #{job.id}. El worker procesará el trabajo en segundos.', 'success')
     return redirect(url_for('dashboard.jobs'))
 
 
@@ -944,7 +933,8 @@ def bot_horoscopo_run():
         flash('Error al descontar créditos.', 'danger')
         return redirect(url_for('dashboard.bot_horoscopo'))
 
+    job.status = 'queued'
     db.session.commit()
-    run_pipeline_async(current_app._get_current_object(), job.id, params)
-    flash(f'✅ Horóscopo iniciado — Job #{job.id}.', 'success')
+
+    flash(f'✅ Horóscopo en cola — Job #{job.id}. El worker procesará el trabajo en segundos.', 'success')
     return redirect(url_for('dashboard.jobs'))
