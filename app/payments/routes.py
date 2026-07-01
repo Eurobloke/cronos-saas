@@ -8,6 +8,7 @@ from app.models import Plan, Payment, Subscription, Coupon
 from app.services.paypal_service import paypal
 from app.services.dlocal_service import dlocal
 from app.services.stripe_service import stripe_svc
+from app.services.lemonsqueezy_service import lemonsqueezy
 from app.services import credit_service, email_service
 
 payments_bp = Blueprint('payments', __name__, url_prefix='/payments')
@@ -962,6 +963,192 @@ def stripe_webhook():
         current_app.logger.info(f'[Stripe Webhook] ✅ Pago #{payment.id} completado')
     except Exception as e:
         current_app.logger.error(f'[Stripe Webhook] Error: {e}')
+        db.session.rollback()
+        return jsonify({'ok': False}), 500
+
+    return jsonify({'ok': True})
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ─── Lemon Squeezy — Pago global con tarjeta ─────────────────────────────
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Mapa: pack_id / plan_slug / bot_slug → variant_id de Lemon Squeezy
+# Se configura en Railway como variable o aquí directamente tras crear los productos
+LS_VARIANTS = {
+    'pack_50':        '',   # Pack Básico $4.99
+    'pack_150':       '',   # Pack Creator $12.99
+    'pack_500':       '',   # Pack Agency $34.99
+    'horoscopo':      '',
+    'motivacion':     '',
+    'cristiano':      '',
+    'noticias':       '',
+    'music_video':    '',
+    'vehiculos':      '',
+    'distrokid':      '',
+    'avatar':         '',
+    'codigo_fuente':  '',
+}
+
+
+def _ls_variant(key: str) -> str:
+    """Obtiene el variant_id desde config de Railway o el dict local."""
+    env_key = f'LS_VARIANT_{key.upper()}'
+    return current_app.config.get(env_key, '') or LS_VARIANTS.get(key, '')
+
+
+def _ls_checkout(payment: Payment, description: str, key: str):
+    """Crea checkout Lemon Squeezy y redirige."""
+    app_url = current_app.config['APP_URL']
+    variant_id = _ls_variant(key)
+    if not variant_id:
+        flash('Producto no configurado aún. Usa PayPal por ahora.', 'warning')
+        return redirect(url_for('payments.plans'))
+    try:
+        result = lemonsqueezy.create_checkout(
+            variant_id=variant_id,
+            amount_override=payment.amount,
+            description=description,
+            success_url=f'{app_url}/payments/ls/success?pid={payment.id}',
+            custom_data={'payment_id': str(payment.id)},
+        )
+        payment.paypal_order_id = result['checkout_id']
+        db.session.commit()
+        return redirect(result['checkout_url'])
+    except Exception as e:
+        current_app.logger.error(f'LemonSqueezy checkout error: {e}')
+        payment.status = 'failed'
+        db.session.commit()
+        flash('Error al crear el checkout. Intenta con PayPal.', 'danger')
+        return redirect(url_for('payments.plans'))
+
+
+@payments_bp.route('/ls/buy-credits/<pack_id>', methods=['POST'])
+@login_required
+def ls_buy_credits(pack_id):
+    pack = next((p for p in CREDIT_PACKS if p['id'] == pack_id), None)
+    if not pack:
+        abort(404)
+    payment = Payment(
+        user_id=current_user.id, amount=pack['price'], type='credit_pack',
+        credits_granted=pack['credits'],
+        description=f'{pack["credits"]} créditos ({pack["label"]})', status='pending',
+    )
+    payment.generate_invoice_number()
+    db.session.add(payment)
+    db.session.commit()
+    return _ls_checkout(payment, payment.description, pack_id)
+
+
+@payments_bp.route('/ls/buy-plan/<int:plan_id>/<billing>', methods=['POST'])
+@login_required
+def ls_buy_plan(plan_id, billing):
+    if billing not in ('monthly', 'annual'):
+        abort(400)
+    plan = Plan.query.get_or_404(plan_id)
+    price = plan.price_annual if billing == 'annual' else plan.price_monthly
+    label = f'Plan {plan.name} - {"Anual" if billing == "annual" else "Mensual"}'
+    payment = Payment(
+        user_id=current_user.id, amount=price, type=f'plan_{billing}',
+        credits_granted=plan.credits_monthly, plan_id=plan.id,
+        description=label, status='pending',
+    )
+    payment.generate_invoice_number()
+    db.session.add(payment)
+    db.session.commit()
+    return _ls_checkout(payment, label, f'plan_{plan.slug}_{billing}')
+
+
+@payments_bp.route('/ls/buy-bot/<slug>')
+@login_required
+def ls_buy_bot(slug):
+    if slug not in BOTS_VENTA:
+        abort(404)
+    bot = BOTS_VENTA[slug]
+    payment = Payment(
+        user_id=current_user.id, amount=bot['price'], type=f'bot_{slug}',
+        credits_granted=0, description=f'{bot["name"]} — código fuente', status='pending',
+    )
+    payment.generate_invoice_number()
+    db.session.add(payment)
+    db.session.commit()
+    return _ls_checkout(payment, payment.description, slug)
+
+
+@payments_bp.route('/ls/buy-source')
+@login_required
+def ls_buy_source():
+    payment = Payment(
+        user_id=current_user.id, amount=CODIGO_FUENTE['price'], type='codigo_fuente',
+        credits_granted=0, description=CODIGO_FUENTE['name'], status='pending',
+    )
+    payment.generate_invoice_number()
+    db.session.add(payment)
+    db.session.commit()
+    return _ls_checkout(payment, payment.description, 'codigo_fuente')
+
+
+@payments_bp.route('/ls/success')
+@login_required
+def ls_success():
+    pid = request.args.get('pid', type=int)
+    if not pid:
+        return redirect(url_for('payments.plans'))
+    payment = Payment.query.filter_by(id=pid, user_id=current_user.id).first()
+    if not payment:
+        flash('Pago no encontrado.', 'danger')
+        return redirect(url_for('payments.plans'))
+    if payment.status == 'completed':
+        flash('✅ ¡Pago ya procesado!', 'success')
+        return redirect(url_for('payments.success', payment_id=payment.id))
+    # El webhook confirmará el pago; mostramos pantalla de espera
+    flash('✅ ¡Gracias! Tu pago está siendo confirmado. Los créditos aparecerán en segundos.', 'success')
+    return redirect(url_for('payments.success', payment_id=payment.id))
+
+
+@payments_bp.route('/ls/webhook', methods=['POST'])
+@csrf.exempt
+def ls_webhook():
+    payload = request.get_data()
+    sig = request.headers.get('X-Signature', '')
+    if not lemonsqueezy.verify_webhook(payload, sig):
+        current_app.logger.warning('[LS Webhook] Firma inválida')
+        return jsonify({'ok': False}), 400
+
+    import json as _json
+    try:
+        event = _json.loads(payload)
+    except Exception:
+        return jsonify({'ok': False}), 400
+
+    event_name = event.get('meta', {}).get('event_name', '')
+    if event_name != 'order_created':
+        return jsonify({'ok': True, 'skipped': event_name})
+
+    try:
+        custom = event.get('meta', {}).get('custom_data', {})
+        pid = custom.get('payment_id')
+        if not pid:
+            return jsonify({'ok': True, 'msg': 'sin payment_id'})
+
+        payment = Payment.query.get(int(pid))
+        if not payment or payment.status == 'completed':
+            return jsonify({'ok': True, 'msg': 'ya procesado'})
+
+        data = event.get('data', {}).get('attributes', {})
+        payment.status = 'completed'
+        payment.paypal_payer_email = data.get('user_email', '')
+        payment.completed_at = datetime.now(timezone.utc)
+
+        if payment.credits_granted:
+            credit_service.grant_credits(
+                payment.user, payment.credits_granted,
+                payment.description, reference=f'payment:{payment.id}'
+            )
+        db.session.commit()
+        current_app.logger.info(f'[LS Webhook] ✅ Pago #{payment.id} completado')
+    except Exception as e:
+        current_app.logger.error(f'[LS Webhook] Error: {e}')
         db.session.rollback()
         return jsonify({'ok': False}), 500
 
