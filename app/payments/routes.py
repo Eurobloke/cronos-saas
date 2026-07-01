@@ -7,6 +7,7 @@ from app.extensions import db, csrf
 from app.models import Plan, Payment, Subscription, Coupon
 from app.services.paypal_service import paypal
 from app.services.dlocal_service import dlocal
+from app.services.stripe_service import stripe_svc
 from app.services import credit_service, email_service
 
 payments_bp = Blueprint('payments', __name__, url_prefix='/payments')
@@ -26,7 +27,9 @@ def plans():
     return render_template('payments/plans.html',
                            plans=active_plans,
                            packs=CREDIT_PACKS,
-                           dlocal_enabled=dlocal.is_configured())
+                           dlocal_enabled=dlocal.is_configured(),
+                           stripe_enabled=stripe_svc.is_configured(),
+                           stripe_public_key=stripe_svc.public_key())
 
 
 # ─── Compra de pack de créditos ───────────────────────────────────────────────
@@ -740,6 +743,229 @@ def special_capture():
         flash('Error al procesar el pago.', 'danger')
 
     return redirect('/pagar')
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ─── Stripe — Pago con tarjeta internacional ─────────────────────────────
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _stripe_checkout(payment: Payment, description: str, precio: float,
+                     success_path: str, cancel_path: str):
+    """Crea sesión Stripe y redirige al checkout."""
+    app_url = current_app.config['APP_URL']
+    try:
+        sess = stripe_svc.create_checkout_session(
+            amount=precio,
+            description=description,
+            success_url=f'{app_url}{success_path}?session_id={{CHECKOUT_SESSION_ID}}&pid={payment.id}',
+            cancel_url=f'{app_url}{cancel_path}',
+            metadata={'payment_id': str(payment.id)},
+        )
+        payment.paypal_order_id = sess['session_id']
+        db.session.commit()
+        return redirect(sess['checkout_url'])
+    except Exception as e:
+        current_app.logger.error(f'Stripe checkout error: {e}')
+        payment.status = 'failed'
+        db.session.commit()
+        flash('Error al conectar con Stripe. Intenta con otro método.', 'danger')
+        return redirect(url_for('payments.plans'))
+
+
+@payments_bp.route('/stripe/buy-credits/<pack_id>', methods=['POST'])
+@login_required
+def stripe_buy_credits(pack_id):
+    pack = next((p for p in CREDIT_PACKS if p['id'] == pack_id), None)
+    if not pack:
+        abort(404)
+    coupon_code = request.form.get('coupon', '').strip().upper()
+    coupon = None
+    final_price = pack['price']
+    discount = 0.0
+    if coupon_code:
+        coupon = Coupon.query.filter_by(code=coupon_code).first()
+        if coupon and coupon.is_valid():
+            final_price = coupon.apply(pack['price'])
+            discount = round(pack['price'] - final_price, 2)
+        else:
+            flash('Cupón inválido o expirado.', 'warning')
+            return redirect(url_for('payments.plans'))
+    payment = Payment(
+        user_id=current_user.id, amount=final_price, type='credit_pack',
+        credits_granted=pack['credits'], coupon_id=coupon.id if coupon else None,
+        discount_amount=discount, description=f'{pack["credits"]} créditos ({pack["label"]})',
+        status='pending',
+    )
+    payment.generate_invoice_number()
+    db.session.add(payment)
+    db.session.commit()
+    return _stripe_checkout(payment, payment.description, final_price,
+                            '/payments/stripe/success', '/payments/cancel')
+
+
+@payments_bp.route('/stripe/buy-plan/<int:plan_id>/<billing>', methods=['POST'])
+@login_required
+def stripe_buy_plan(plan_id, billing):
+    if billing not in ('monthly', 'annual'):
+        abort(400)
+    plan = Plan.query.get_or_404(plan_id)
+    price = plan.price_annual if billing == 'annual' else plan.price_monthly
+    coupon_code = request.form.get('coupon', '').strip().upper()
+    coupon = None
+    final_price = price
+    discount = 0.0
+    if coupon_code:
+        coupon = Coupon.query.filter_by(code=coupon_code).first()
+        if coupon and coupon.is_valid():
+            final_price = coupon.apply(price)
+            discount = round(price - final_price, 2)
+        else:
+            flash('Cupón inválido o expirado.', 'warning')
+            return redirect(url_for('payments.plans'))
+    label = f'Plan {plan.name} - {"Anual" if billing == "annual" else "Mensual"}'
+    payment = Payment(
+        user_id=current_user.id, amount=final_price, type=f'plan_{billing}',
+        credits_granted=plan.credits_monthly, plan_id=plan.id,
+        coupon_id=coupon.id if coupon else None, discount_amount=discount,
+        description=label, status='pending',
+    )
+    payment.generate_invoice_number()
+    db.session.add(payment)
+    db.session.commit()
+    return _stripe_checkout(payment, label, final_price,
+                            '/payments/stripe/success', '/payments/cancel')
+
+
+@payments_bp.route('/stripe/buy-bot/<slug>')
+@login_required
+def stripe_buy_bot(slug):
+    if slug not in BOTS_VENTA:
+        abort(404)
+    bot = BOTS_VENTA[slug]
+    payment = Payment(
+        user_id=current_user.id, amount=bot['price'], type=f'bot_{slug}',
+        credits_granted=0, description=f'{bot["name"]} — código fuente',
+        status='pending',
+    )
+    payment.generate_invoice_number()
+    db.session.add(payment)
+    db.session.commit()
+    return _stripe_checkout(payment, payment.description, bot['price'],
+                            '/payments/stripe/success', '/pagar')
+
+
+@payments_bp.route('/stripe/buy-source')
+@login_required
+def stripe_buy_source():
+    payment = Payment(
+        user_id=current_user.id, amount=CODIGO_FUENTE['price'], type='codigo_fuente',
+        credits_granted=0, description=CODIGO_FUENTE['name'], status='pending',
+    )
+    payment.generate_invoice_number()
+    db.session.add(payment)
+    db.session.commit()
+    return _stripe_checkout(payment, payment.description, CODIGO_FUENTE['price'],
+                            '/payments/stripe/success', '/pagar')
+
+
+@payments_bp.route('/stripe/success')
+@login_required
+def stripe_success():
+    session_id = request.args.get('session_id', '')
+    pid = request.args.get('pid', type=int)
+    if not session_id or not pid:
+        flash('Parámetros inválidos.', 'warning')
+        return redirect(url_for('payments.plans'))
+
+    payment = Payment.query.filter_by(id=pid, user_id=current_user.id).first()
+    if not payment:
+        flash('Pago no encontrado.', 'danger')
+        return redirect(url_for('payments.plans'))
+
+    if payment.status == 'completed':
+        flash(f'✅ ¡Pago ya procesado!', 'success')
+        return redirect(url_for('payments.success', payment_id=payment.id))
+
+    try:
+        sess = stripe_svc.retrieve_session(session_id)
+        if sess.get('payment_status') == 'paid':
+            payment.status = 'completed'
+            payment.paypal_capture_id = sess.get('payment_intent', '')
+            payment.paypal_payer_email = sess.get('customer_details', {}).get('email', '')
+            payment.completed_at = datetime.now(timezone.utc)
+            if payment.credits_granted:
+                credit_service.grant_credits(
+                    current_user, payment.credits_granted,
+                    payment.description, reference=f'payment:{payment.id}'
+                )
+            if payment.plan_id:
+                months = 12 if payment.type == 'plan_annual' else 1
+                expires = datetime.now(timezone.utc) + timedelta(days=30 * months)
+                existing = Subscription.query.filter_by(
+                    user_id=current_user.id, plan_id=payment.plan_id, status='active'
+                ).first()
+                if not existing:
+                    db.session.add(Subscription(
+                        user_id=current_user.id, plan_id=payment.plan_id,
+                        billing_cycle=payment.type.replace('plan_', ''),
+                        status='active', expires_at=expires,
+                    ))
+            db.session.commit()
+            email_service.send_purchase_confirmation(current_user, payment)
+            msg = (f'✅ ¡Pago completado! {payment.credits_granted} créditos añadidos.'
+                   if payment.credits_granted else
+                   f'✅ ¡Pago de ${payment.amount:.2f} USD completado! Recibirás acceso por email.')
+            flash(msg, 'success')
+            return redirect(url_for('payments.success', payment_id=payment.id))
+        else:
+            flash('El pago está siendo procesado. Espera unos minutos.', 'info')
+    except Exception as e:
+        current_app.logger.error(f'Stripe success error: {e}')
+        flash('Error verificando el pago. Contacta soporte.', 'danger')
+
+    return redirect(url_for('payments.plans'))
+
+
+@payments_bp.route('/stripe/webhook', methods=['POST'])
+@csrf.exempt
+def stripe_webhook():
+    payload = request.get_data()
+    sig = request.headers.get('Stripe-Signature', '')
+    try:
+        event = stripe_svc.verify_webhook(payload, sig)
+    except Exception as e:
+        current_app.logger.error(f'[Stripe Webhook] Error: {e}')
+        return jsonify({'ok': False}), 400
+
+    if event.get('type') != 'checkout.session.completed':
+        return jsonify({'ok': True, 'skipped': event.get('type')})
+
+    sess = event.get('data', {}).get('object', {})
+    pid = sess.get('metadata', {}).get('payment_id')
+    if not pid:
+        return jsonify({'ok': True, 'msg': 'sin payment_id'})
+
+    try:
+        payment = Payment.query.get(int(pid))
+        if not payment or payment.status == 'completed':
+            return jsonify({'ok': True, 'msg': 'ya procesado'})
+        payment.status = 'completed'
+        payment.paypal_capture_id = sess.get('payment_intent', '')
+        payment.paypal_payer_email = sess.get('customer_details', {}).get('email', '')
+        payment.completed_at = datetime.now(timezone.utc)
+        if payment.credits_granted:
+            credit_service.grant_credits(
+                payment.user, payment.credits_granted,
+                payment.description, reference=f'payment:{payment.id}'
+            )
+        db.session.commit()
+        current_app.logger.info(f'[Stripe Webhook] ✅ Pago #{payment.id} completado')
+    except Exception as e:
+        current_app.logger.error(f'[Stripe Webhook] Error: {e}')
+        db.session.rollback()
+        return jsonify({'ok': False}), 500
+
+    return jsonify({'ok': True})
 
 
 # ═══════════════════════════════════════════════════════════════════════════

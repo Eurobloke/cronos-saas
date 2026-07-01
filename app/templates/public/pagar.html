@@ -11,16 +11,18 @@
       <div style="font-size:1.15rem;font-weight:800;color:#fff;margin-bottom:6px;">Elige cómo pagar</div>
       <div id="modal-desc" style="color:#aaa;font-size:0.88rem;line-height:1.5;padding:0 8px;"></div>
     </div>
+    <!-- Stripe -->
+    <button onclick="pagarCon('stripe')"
+      style="width:100%;padding:17px;border-radius:13px;border:2px solid #635bff;background:#635bff;color:#fff;font-size:1rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px;">
+      💳 Pagar con tarjeta
+      <span style="font-size:0.72rem;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:20px;">Stripe · Seguro</span>
+    </button>
+    <!-- PayPal -->
     <button onclick="pagarCon('paypal')"
       style="width:100%;padding:17px;border-radius:13px;border:2px solid #0070ba;background:#003087;color:#fff;font-size:1rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px;">
       <img src="https://www.paypalobjects.com/webstatic/icon/pp258.png" style="height:20px;" alt="PayPal">
       Pagar con PayPal
       <span style="font-size:0.72rem;background:rgba(255,255,255,0.15);padding:2px 8px;border-radius:20px;">Internacional</span>
-    </button>
-    <button onclick="pagarCon('dlocal')"
-      style="width:100%;padding:17px;border-radius:13px;border:2px solid #00b14f;background:#00b14f;color:#fff;font-size:1rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">
-      🌍 Tarjeta / banco local
-      <span style="font-size:0.72rem;background:rgba(255,255,255,0.15);padding:2px 8px;border-radius:20px;">dLocal Go</span>
     </button>
     <div style="text-align:center;margin-top:16px;color:#555;font-size:0.78rem;">🔒 Pago seguro · Datos encriptados · No guardamos tarjetas</div>
   </div>
@@ -66,7 +68,7 @@
             <div style="font-size:2.6rem;font-weight:900;color:#6366f1;">$3,800 <span style="font-size:1rem;color:#888;font-weight:400;">USD</span></div>
             <div style="color:#888;font-size:0.8rem;">Pago único · Licencia comercial · Sin mensualidades</div>
           </div>
-          <button onclick="abrirModal('Código Fuente Cronos AI (sistema completo) — $3,800 USD', '/payments/buy-source/paypal', '/payments/buy-source/dlocal')"
+          <button onclick="abrirModal('Código Fuente Cronos AI (sistema completo) — $3,800 USD', '/payments/buy-source/paypal', '/payments/stripe/buy-source')"
             style="padding:15px 28px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:800;cursor:pointer;">
             💳 Comprar ahora
           </button>
@@ -127,7 +129,7 @@
       </details>
 
       <div style="font-size:0.78rem;color:#555;margin-bottom:14px;flex:1;">✅ Código fuente · ✅ Guía de instalación · ✅ Soporte WhatsApp 15 días</div>
-      <button onclick="abrirModal('{{ bot.name }} — ${{ '{:,}'.format(bot.precio) }} USD', '/payments/buy-bot/{{ bot.slug }}/paypal', '/payments/buy-bot/{{ bot.slug }}/dlocal')"
+      <button onclick="abrirModal('{{ bot.name }} — ${{ '{:,}'.format(bot.precio) }} USD', '/payments/buy-bot/{{ bot.slug }}/paypal', '/payments/stripe/buy-bot/{{ bot.slug }}')"
         style="width:100%;padding:12px;background:rgba(99,102,241,0.15);color:#6366f1;border:1px solid rgba(99,102,241,0.35);border-radius:10px;font-weight:700;cursor:pointer;font-size:0.9rem;">
         💳 Comprar este bot
       </button>
@@ -152,7 +154,7 @@
       <div style="font-weight:800;color:#fff;margin-bottom:6px;">{{ pack.label }}</div>
       <div style="font-size:1.8rem;font-weight:900;color:#6366f1;margin-bottom:4px;">${{ pack.price }} <span style="font-size:0.8rem;color:#888;font-weight:400;">USD</span></div>
       <div style="color:#aaa;font-size:0.85rem;margin-bottom:16px;">🪙 {{ pack.credits }} créditos sin vencimiento</div>
-      <button onclick="abrirModal('{{ pack.label }} — {{ pack.credits }} créditos por ${{ pack.price }} USD', '/payments/buy-credits/{{ pack.id }}', '/payments/dlocal/buy-credits/{{ pack.id }}')"
+      <button onclick="abrirModal('{{ pack.label }} — {{ pack.credits }} créditos por ${{ pack.price }} USD', '/payments/buy-credits/{{ pack.id }}', '/payments/stripe/buy-credits/{{ pack.id }}')"
         style="width:100%;padding:11px;background:{% if pack.popular %}#6366f1{% else %}rgba(99,102,241,0.12){% endif %};color:#fff;border:{% if pack.popular %}none{% else %}1px solid rgba(99,102,241,0.3){% endif %};border-radius:9px;font-weight:700;cursor:pointer;font-size:0.88rem;">
         💳 Comprar
       </button>
@@ -175,9 +177,9 @@
       <div style="font-size:0.82rem;color:#bbb;margin-bottom:4px;"><span style="color:#22c55e;">✓</span> {{ feature }}</div>
       {% endfor %}
       <div style="margin-top:16px;display:flex;flex-direction:column;gap:8px;">
-        <button onclick="abrirModal('Plan {{ plan.name }} mensual — ${{ '%.2f'|format(plan.price_monthly) }}/mes', '/payments/buy-plan/{{ plan.id }}/monthly', '/payments/dlocal/buy-plan/{{ plan.id }}/monthly')"
+        <button onclick="abrirModal('Plan {{ plan.name }} mensual — ${{ '%.2f'|format(plan.price_monthly) }}/mes', '/payments/buy-plan/{{ plan.id }}/monthly', '/payments/stripe/buy-plan/{{ plan.id }}/monthly')"
           style="padding:11px;background:#6366f1;color:#fff;border:none;border-radius:9px;font-weight:700;cursor:pointer;font-size:0.88rem;">💳 Mensual — ${{ "%.2f"|format(plan.price_monthly) }}/mes</button>
-        <button onclick="abrirModal('Plan {{ plan.name }} anual — ${{ '%.2f'|format(plan.price_annual) }}/año', '/payments/buy-plan/{{ plan.id }}/annual', '/payments/dlocal/buy-plan/{{ plan.id }}/annual')"
+        <button onclick="abrirModal('Plan {{ plan.name }} anual — ${{ '%.2f'|format(plan.price_annual) }}/año', '/payments/buy-plan/{{ plan.id }}/annual', '/payments/stripe/buy-plan/{{ plan.id }}/annual')"
           style="padding:11px;background:transparent;color:#6366f1;border:1px solid #6366f1;border-radius:9px;font-weight:700;cursor:pointer;font-size:0.88rem;">💳 Anual — ${{ "%.2f"|format(plan.price_annual) }}/año {% if plan.annual_savings_percent() > 0 %}<span style="color:#22c55e;font-size:0.75rem;">(-{{ plan.annual_savings_percent() }}%)</span>{% endif %}</button>
       </div>
     </div>
@@ -202,18 +204,18 @@
 </div>
 
 <script>
-let _urlPaypal = '', _urlDlocal = '';
+let _urlPaypal = '', _urlStripe = '';
 
-function abrirModal(descripcion, urlPaypal, urlDlocal) {
+function abrirModal(descripcion, urlPaypal, urlStripe) {
   _urlPaypal = urlPaypal;
-  _urlDlocal = urlDlocal;
+  _urlStripe = urlStripe;
   document.getElementById('modal-desc').textContent = descripcion;
   document.getElementById('pay-modal').style.display = 'flex';
   document.body.style.overflow = 'hidden';
 }
 
 function pagarCon(metodo) {
-  window.location.href = metodo === 'paypal' ? _urlPaypal : _urlDlocal;
+  window.location.href = metodo === 'stripe' ? _urlStripe : _urlPaypal;
 }
 
 function cerrarModal() {
