@@ -1,0 +1,151 @@
+{% extends 'public/base_public.html' %}
+{% block title %}{{ producto.name }} — Cronos AI{% endblock %}
+{% block extra_css %}
+<style>
+  .comprar-wrap { max-width: 860px; margin: 0 auto; padding: 48px 20px 80px; }
+  .comprar-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 24px; overflow: hidden; }
+  .comprar-header { background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(56,189,248,0.1)); padding: 36px 40px; border-bottom: 1px solid var(--border); }
+  .comprar-body { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+  .comprar-info { padding: 36px 40px; border-right: 1px solid var(--border); }
+  .comprar-form { padding: 36px 40px; }
+  .feature-item { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; font-size: 0.9rem; color: var(--text-muted); }
+  .feature-item::before { content: '✅'; flex-shrink: 0; }
+  .form-group { margin-bottom: 18px; }
+  .form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text-muted); }
+  .form-group input, .form-group textarea { width: 100%; padding: 13px 16px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 0.95rem; font-family: inherit; box-sizing: border-box; }
+  .form-group input:focus, .form-group textarea:focus { outline: none; border-color: #6366f1; }
+  .form-group textarea { resize: vertical; min-height: 80px; }
+  .trust-badges { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 16px; }
+  .trust-badge { font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 5px; }
+  @media(max-width: 700px) {
+    .comprar-body { grid-template-columns: 1fr; }
+    .comprar-info { border-right: none; border-bottom: 1px solid var(--border); padding: 28px 24px; }
+    .comprar-form { padding: 28px 24px; }
+    .comprar-header { padding: 28px 24px; }
+  }
+</style>
+{% endblock %}
+{% block content %}
+<div class="comprar-wrap">
+
+  <!-- Breadcrumb -->
+  <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:24px;">
+    <a href="/" style="color:var(--text-muted);text-decoration:none;">Inicio</a> ›
+    <a href="/pagar" style="color:var(--text-muted);text-decoration:none;">Servicios</a> ›
+    <span>{{ producto.name }}</span>
+  </div>
+
+  {% if error %}
+  <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.4);border-radius:12px;padding:14px 20px;margin-bottom:24px;color:#ef4444;font-size:0.9rem;">
+    ⚠️ {{ error }}
+  </div>
+  {% endif %}
+
+  <div class="comprar-card">
+    <!-- Header -->
+    <div class="comprar-header">
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <div style="font-size:3rem;">{{ producto.emoji }}</div>
+        <div style="flex:1;">
+          {% if producto.badge %}
+          <div style="background:{{ producto.badge_color or '#6366f1' }};color:#fff;font-size:0.72rem;font-weight:800;padding:3px 10px;border-radius:20px;display:inline-block;margin-bottom:8px;">{{ producto.badge }}</div>
+          {% endif %}
+          <h1 style="font-size:1.5rem;font-weight:900;margin:0 0 6px;">{{ producto.name }}</h1>
+          <p style="color:var(--text-muted);font-size:0.9rem;margin:0;line-height:1.6;">{{ producto.desc }}</p>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:2.5rem;font-weight:900;color:#22c55e;line-height:1;">
+            ${{ '%.0f'|format(producto.price) }}
+          </div>
+          <div style="color:var(--text-muted);font-size:0.82rem;">
+            {% if producto.recurrente %}USD / mes{% else %}USD pago único{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="comprar-body">
+      <!-- Info / Features -->
+      <div class="comprar-info">
+        <h3 style="font-size:0.95rem;font-weight:700;margin-bottom:16px;color:var(--text);">¿Qué incluye?</h3>
+        {% for feat in producto.features %}
+        <div class="feature-item">{{ feat }}</div>
+        {% endfor %}
+
+        <div style="margin-top:28px;padding:16px;background:rgba(37,211,102,0.08);border:1px solid rgba(37,211,102,0.3);border-radius:12px;">
+          <div style="font-size:0.82rem;font-weight:700;color:#22c55e;margin-bottom:6px;">¿Prefieres hablar primero?</div>
+          <a href="https://wa.me/18298053488?text={{ producto.wa_msg | urlencode }}" target="_blank"
+             style="display:flex;align-items:center;gap:8px;color:#25d366;text-decoration:none;font-size:0.88rem;font-weight:600;">
+            💬 Escríbeme por WhatsApp 829-805-3488
+          </a>
+        </div>
+      </div>
+
+      <!-- Form -->
+      <div class="comprar-form">
+        <h3 style="font-size:1rem;font-weight:700;margin-bottom:6px;">Completa el pago</h3>
+        <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:24px;">Serás redirigido a PayPal para completar el pago de forma segura.</p>
+
+        <form method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <div class="form-group">
+            <label>Tu correo electrónico *</label>
+            <input type="email" name="email" placeholder="tu@correo.com" required
+                   value="{{ request.form.get('email', '') }}">
+            <div style="font-size:0.75rem;color:var(--text-muted);margin-top:5px;">Te enviaremos la confirmación aquí.</div>
+          </div>
+
+          <div class="form-group">
+            <label>Tu nombre</label>
+            <input type="text" name="nombre" placeholder="Nombre (opcional)"
+                   value="{{ request.form.get('nombre', '') }}">
+          </div>
+
+          {% if producto.nicho %}
+          <div class="form-group">
+            <label>¿Qué nicho quieres para tu canal?</label>
+            <select name="notas" style="width:100%;padding:13px 16px;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:0.95rem;box-sizing:border-box;">
+              <option value="">Selecciona un nicho</option>
+              {% for n in producto.nicho %}
+              <option value="{{ n }}">{{ n }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          {% else %}
+          <div class="form-group">
+            <label>Notas adicionales</label>
+            <textarea name="notas" placeholder="Cualquier detalle que necesitamos saber...">{{ request.form.get('notas', '') }}</textarea>
+          </div>
+          {% endif %}
+
+          <button type="submit" style="width:100%;padding:16px;background:linear-gradient(135deg,#003087,#0070ba);color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:800;cursor:pointer;margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:10px;">
+            <img src="https://www.paypalobjects.com/webstatic/icon/pp258.png" style="height:22px;" alt="PayPal">
+            Pagar ${{ '%.0f'|format(producto.price) }} {% if producto.recurrente %}USD/mes{% else %}USD{% endif %} con PayPal
+          </button>
+        </form>
+
+        <div style="text-align:center;margin:14px 0;color:var(--text-muted);font-size:0.82rem;">— o —</div>
+
+        <a href="https://wa.me/18298053488?text={{ producto.wa_msg | urlencode }}" target="_blank"
+           style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;background:#25d366;color:#fff;border-radius:12px;font-weight:700;font-size:0.95rem;text-decoration:none;box-sizing:border-box;">
+          💬 Pagar por WhatsApp (Binance / transferencia)
+        </a>
+
+        <div class="trust-badges">
+          <span class="trust-badge">🔒 Pago 100% seguro</span>
+          <span class="trust-badge">✉️ Confirmación por email</span>
+          <span class="trust-badge">💬 Soporte WhatsApp</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Otros productos -->
+  <div style="margin-top:48px;text-align:center;">
+    <a href="/pagar" style="color:var(--text-muted);font-size:0.88rem;text-decoration:underline;">← Ver todos los servicios disponibles</a>
+  </div>
+
+</div>
+{% endblock %}

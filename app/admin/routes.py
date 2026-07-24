@@ -2,7 +2,7 @@
 import json
 from datetime import datetime, timezone, timedelta
 from functools import wraps
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, abort
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, abort, current_app
 from flask_login import login_required, current_user
 from sqlalchemy import func
 
@@ -262,6 +262,28 @@ def jobs():
         query = query.filter_by(status=status)
     jobs_pag = query.order_by(Job.created_at.desc()).paginate(page=page, per_page=30)
     return render_template('admin/jobs.html', jobs=jobs_pag, status=status)
+
+
+# ─── Links de pago para compartir ─────────────────────────────────────────────
+
+@admin_bp.route('/links')
+@admin_required
+def links():
+    from app.public.routes import PRODUCTOS
+    app_url = current_app.config['APP_URL']
+
+    # Leer ventas registradas en log local
+    import os, json as _json
+    log_path = os.path.join(current_app.root_path, '..', 'ventas_log.json')
+    ventas = []
+    try:
+        with open(log_path, 'r', encoding='utf-8') as f:
+            ventas = _json.load(f)
+        ventas = list(reversed(ventas))  # más recientes primero
+    except:
+        pass
+
+    return render_template('admin/links.html', productos=PRODUCTOS, app_url=app_url, ventas=ventas)
 
 
 # ─── API de estadísticas ──────────────────────────────────────────────────────

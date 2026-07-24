@@ -1,0 +1,42 @@
+{% extends 'public/base_public.html' %}
+{% block title %}¡Pago recibido! — Cronos AI{% endblock %}
+{% block content %}
+<div style="max-width:620px;margin:60px auto;padding:0 20px;text-align:center;">
+
+  <div style="font-size:5rem;margin-bottom:20px;">🎉</div>
+
+  <h1 style="font-size:2.2rem;font-weight:900;margin-bottom:12px;">¡Pago recibido!</h1>
+  <p style="color:var(--text-muted);font-size:1.05rem;margin-bottom:8px;">
+    Tu pago por <strong style="color:var(--text);">{{ producto }}</strong>
+    — <strong style="color:#22c55e;">${{ precio }} USD</strong> fue confirmado.
+  </p>
+  {% if email %}
+  <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:32px;">
+    Enviamos una confirmación a <strong>{{ email }}</strong>.
+  </p>
+  {% endif %}
+
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:32px;margin-bottom:28px;">
+    <div style="font-size:1.6rem;font-weight:900;margin-bottom:12px;">¿Qué sigue ahora?</div>
+    <div style="text-align:left;color:var(--text-muted);font-size:0.92rem;line-height:1.9;">
+      <div>1. Recibirás un email de confirmación en minutos.</div>
+      <div>2. Nos pondremos en contacto por WhatsApp para coordinar el acceso.</div>
+      <div>3. Tu servicio estará activo en máximo 24 horas.</div>
+    </div>
+  </div>
+
+  <a href="https://wa.me/18298053488?text=Hola%2C%20acabo%20de%20pagar%20por%20{{ producto | urlencode }}%20y%20quiero%20coordinar%20el%20acceso"
+     target="_blank"
+     style="display:inline-flex;align-items:center;gap:10px;background:#25d366;color:#fff;padding:16px 32px;border-radius:50px;font-weight:800;font-size:1rem;text-decoration:none;box-shadow:0 4px 20px rgba(37,211,102,0.4);margin-bottom:24px;">
+    💬 Escribir por WhatsApp para coordinar
+  </a>
+
+  <div style="color:var(--text-muted);font-size:0.85rem;">
+    O escríbenos al email: <a href="mailto:robertomartem@gmail.com" style="color:var(--accent);">robertomartem@gmail.com</a>
+  </div>
+
+  <div style="margin-top:36px;">
+    <a href="/" style="color:var(--text-muted);font-size:0.85rem;text-decoration:underline;">Volver al inicio</a>
+  </div>
+</div>
+{% endblock %}

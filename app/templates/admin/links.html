@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% block title %}Links de Pago — Admin{% endblock %}
+{% block content %}
+<div style="max-width:1100px;margin:0 auto;padding:32px 20px;">
+
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;flex-wrap:wrap;gap:12px;">
+    <div>
+      <h1 style="font-size:1.8rem;font-weight:900;margin:0;">💰 Links de Pago</h1>
+      <p style="color:var(--text-muted);margin:4px 0 0;">Comparte estos links por WhatsApp. El cliente paga sin necesitar cuenta.</p>
+    </div>
+    <a href="/links" target="_blank" style="padding:10px 20px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;color:var(--text);text-decoration:none;font-size:0.88rem;">
+      👁 Ver página pública de links
+    </a>
+  </div>
+
+  <!-- Links por producto -->
+  <div style="display:grid;gap:14px;margin-bottom:48px;">
+    {% for slug, p in productos.items() %}
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:18px 24px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;">
+      <div style="font-size:2rem;">{{ p.emoji }}</div>
+      <div style="flex:1;min-width:180px;">
+        <div style="font-weight:700;font-size:0.9rem;margin-bottom:2px;">{{ p.name }}</div>
+        <div style="color:{% if p.recurrente %}#22c55e{% else %}#6366f1{% endif %};font-weight:900;">
+          ${{ '%.0f'|format(p.price) }} {% if p.recurrente %}USD/mes{% else %}USD{% endif %}
+        </div>
+        <div style="color:var(--text-muted);font-size:0.75rem;margin-top:3px;word-break:break-all;">
+          {{ app_url }}/comprar/{{ slug }}
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button onclick="copiar('{{ app_url }}/comprar/{{ slug }}', this)"
+          style="padding:8px 16px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.8rem;font-weight:600;cursor:pointer;">
+          📋 Copiar
+        </button>
+        <a href="https://wa.me/18298053488?text=Te+mando+el+link+de+pago+de+{{ p.name | urlencode }}%3A+{{ (app_url + '/comprar/' + slug) | urlencode }}"
+           target="_blank"
+           style="padding:8px 16px;background:#25d366;color:#fff;border-radius:8px;font-size:0.8rem;font-weight:600;text-decoration:none;">
+          💬 Enviar WA
+        </a>
+        <a href="/comprar/{{ slug }}" target="_blank"
+           style="padding:8px 16px;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);color:#6366f1;border-radius:8px;font-size:0.8rem;font-weight:600;text-decoration:none;">
+          👁 Ver
+        </a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Historial de ventas -->
+  <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:16px;">📊 Ventas registradas</h2>
+  {% if ventas %}
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden;">
+    <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+      <thead>
+        <tr style="background:rgba(255,255,255,0.04);">
+          <th style="padding:14px 20px;text-align:left;color:var(--text-muted);font-weight:600;">Fecha</th>
+          <th style="padding:14px 20px;text-align:left;color:var(--text-muted);font-weight:600;">Producto</th>
+          <th style="padding:14px 20px;text-align:left;color:var(--text-muted);font-weight:600;">Precio</th>
+          <th style="padding:14px 20px;text-align:left;color:var(--text-muted);font-weight:600;">Cliente</th>
+          <th style="padding:14px 20px;text-align:left;color:var(--text-muted);font-weight:600;">Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for v in ventas %}
+        <tr style="border-top:1px solid var(--border);">
+          <td style="padding:14px 20px;color:var(--text-muted);font-size:0.78rem;">{{ v.fecha[:16].replace('T',' ') }}</td>
+          <td style="padding:14px 20px;font-weight:600;">{{ v.producto }}</td>
+          <td style="padding:14px 20px;color:#22c55e;font-weight:900;">${{ '%.2f'|format(v.precio) }}</td>
+          <td style="padding:14px 20px;">
+            <div style="font-size:0.82rem;">{{ v.email }}</div>
+            {% if v.nombre %}<div style="color:var(--text-muted);font-size:0.75rem;">{{ v.nombre }}</div>{% endif %}
+          </td>
+          <td style="padding:14px 20px;">
+            <a href="https://wa.me/18298053488?text=Hola+{{ v.nombre | urlencode }}%2C+te+contacto+por+tu+compra+de+{{ v.producto | urlencode }}"
+               target="_blank"
+               style="padding:6px 14px;background:#25d366;color:#fff;border-radius:8px;font-size:0.78rem;font-weight:600;text-decoration:none;">
+              💬 WA
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:40px;text-align:center;color:var(--text-muted);">
+    Aún no hay ventas registradas por los links públicos. ¡Comparte los links!
+  </div>
+  {% endif %}
+
+</div>
+
+<script>
+function copiar(url, btn) {
+  navigator.clipboard.writeText(url).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✅ Copiado';
+    btn.style.background = '#22c55e';
+    btn.style.color = '#fff';
+    btn.style.borderColor = '#22c55e';
+    setTimeout(() => {
+      btn.textContent = orig;
+      btn.style.background = '';
+      btn.style.color = '';
+      btn.style.borderColor = '';
+    }, 2000);
+  });
+}
+</script>
+{% endblock %}
