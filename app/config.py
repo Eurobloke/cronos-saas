@@ -32,9 +32,31 @@ class Config:
     DLOCAL_API_KEY    = os.environ.get('DLOCAL_API_KEY', '')
     DLOCAL_SECRET_KEY = os.environ.get('DLOCAL_SECRET_KEY', '')
 
-    # App
+    # Lemon Squeezy
+    LEMONSQUEEZY_API_KEY       = os.environ.get('LEMONSQUEEZY_API_KEY', '')
+    LEMONSQUEEZY_STORE_ID      = os.environ.get('LEMONSQUEEZY_STORE_ID', '')
+    LEMONSQUEEZY_WEBHOOK_SECRET = os.environ.get('LEMONSQUEEZY_WEBHOOK_SECRET', '')
+    LS_VARIANT_PACK_50         = os.environ.get('LS_VARIANT_PACK_50', '')
+    LS_VARIANT_PACK_150        = os.environ.get('LS_VARIANT_PACK_150', '')
+    LS_VARIANT_PACK_500        = os.environ.get('LS_VARIANT_PACK_500', '')
+    LS_VARIANT_HOROSCOPO       = os.environ.get('LS_VARIANT_HOROSCOPO', '')
+    LS_VARIANT_MOTIVACION      = os.environ.get('LS_VARIANT_MOTIVACION', '')
+    LS_VARIANT_CRISTIANO       = os.environ.get('LS_VARIANT_CRISTIANO', '')
+    LS_VARIANT_NOTICIAS        = os.environ.get('LS_VARIANT_NOTICIAS', '')
+    LS_VARIANT_MUSIC_VIDEO     = os.environ.get('LS_VARIANT_MUSIC_VIDEO', '')
+    LS_VARIANT_VEHICULOS       = os.environ.get('LS_VARIANT_VEHICULOS', '')
+    LS_VARIANT_DISTROKID       = os.environ.get('LS_VARIANT_DISTROKID', '')
+    LS_VARIANT_AVATAR          = os.environ.get('LS_VARIANT_AVATAR', '')
+    LS_VARIANT_CODIGO_FUENTE   = os.environ.get('LS_VARIANT_CODIGO_FUENTE', '')
+
+    # App — Railway detecta RAILWAY_PUBLIC_DOMAIN automáticamente
     APP_NAME = os.environ.get('APP_NAME', 'Cronos AI')
-    APP_URL = os.environ.get('APP_URL', 'http://localhost:5000')
+    _railway_domain = os.environ.get('RAILWAY_PUBLIC_DOMAIN', '')
+    APP_URL = (
+        os.environ.get('APP_URL') or
+        (f'https://{_railway_domain}' if _railway_domain else None) or
+        'http://localhost:5000'
+    )
     ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', 'admin@cronos.ai')
     ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'Admin123!')
 
