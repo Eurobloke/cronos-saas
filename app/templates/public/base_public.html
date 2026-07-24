@@ -59,7 +59,7 @@
       <div style="font-weight:900;font-size:1.2rem;background:linear-gradient(135deg,#6366f1,#38bdf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">⚡ Cronos AI</div>
       <p>Plataforma SaaS de automatización de contenido con Inteligencia Artificial para creadores y agencias digitales.</p>
       <div style="margin-top:14px;display:flex;gap:12px;">
-        <a href="https://wa.me/18096475756" target="_blank" style="color:#25d366;font-size:0.85rem;">💬 WhatsApp</a>
+        <a href="https://wa.me/18298053488" target="_blank" style="color:#25d366;font-size:0.85rem;">💬 WhatsApp</a>
         <a href="mailto:robertomartem@gmail.com" style="color:var(--accent);font-size:0.85rem;">✉️ Email</a>
       </div>
     </div>
@@ -80,7 +80,7 @@
       <h4>Soporte</h4>
       <a href="{{ url_for('public.contact') }}">Contacto</a>
       <a href="mailto:robertomartem@gmail.com">robertomartem@gmail.com</a>
-      <a href="https://wa.me/18096475756" target="_blank">+1 (809) 647-5756</a>
+      <a href="https://wa.me/18298053488" target="_blank">829-805-3488</a>
     </div>
   </div>
   <div class="pub-footer-bottom">
@@ -92,6 +92,17 @@
     </span>
   </div>
 </footer>
+
+<!-- Botón flotante WhatsApp -->
+<a href="https://wa.me/18298053488?text=Hola%2C%20vi%20Cronos%20AI%20y%20me%20interesa%20el%20servicio%20de%20automatizaci%C3%B3n" target="_blank" id="wa-float" title="Escríbeme por WhatsApp">
+  <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="#fff"><path d="M16 0C7.164 0 0 7.164 0 16c0 2.824.738 5.476 2.027 7.793L0 32l8.438-2.008A15.934 15.934 0 0016 32c8.836 0 16-7.164 16-16S24.836 0 16 0zm0 29.333c-2.617 0-5.066-.703-7.176-1.93l-.512-.303-5.008 1.191 1.219-4.883-.332-.527A13.267 13.267 0 012.667 16C2.667 8.637 8.637 2.667 16 2.667S29.333 8.637 29.333 16 23.363 29.333 16 29.333zm7.195-9.883c-.394-.196-2.33-1.15-2.692-1.28-.36-.13-.623-.196-.886.196-.263.394-1.018 1.28-1.247 1.543-.23.263-.46.295-.854.098-.394-.196-1.664-.614-3.17-1.96-1.171-1.047-1.962-2.34-2.192-2.734-.23-.394-.025-.607.172-.803.177-.176.394-.46.59-.69.197-.23.263-.394.394-.657.132-.263.066-.492-.033-.69-.098-.196-.886-2.136-1.214-2.922-.32-.768-.644-.664-.886-.676l-.754-.013c-.263 0-.69.098-1.05.492-.361.394-1.379 1.347-1.379 3.288s1.412 3.813 1.608 4.076c.197.263 2.782 4.248 6.742 5.958.943.407 1.678.65 2.25.832.946.3 1.806.258 2.488.156.758-.113 2.33-.953 2.659-1.873.328-.92.328-1.71.23-1.873-.098-.164-.36-.263-.755-.46z"/></svg>
+  <span>¿Preguntas? Escríbeme</span>
+</a>
+<style>
+  #wa-float { position:fixed; bottom:24px; right:24px; z-index:9999; background:#25d366; color:#fff; border-radius:50px; padding:14px 20px; display:flex; align-items:center; gap:10px; font-weight:700; font-size:0.92rem; text-decoration:none; box-shadow:0 4px 20px rgba(37,211,102,0.5); transition:transform .2s, box-shadow .2s; }
+  #wa-float:hover { transform:scale(1.07); box-shadow:0 6px 28px rgba(37,211,102,0.7); }
+  @media(max-width:480px) { #wa-float span { display:none; } #wa-float { padding:14px; border-radius:50%; } }
+</style>
 
 </body>
 </html>
